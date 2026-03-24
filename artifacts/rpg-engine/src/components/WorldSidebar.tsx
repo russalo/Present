@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useGetWorldState, useListCharacters, useListLocations, useListFactions, useListItems, Character, Location, Faction, Item } from "@workspace/api-client-react";
 import { TensionMeter, RelationBar } from "./Meters";
-import { Badge } from "./ui/Badge";
-import { Clock, Map, Cloud, Activity, Users, Shield, MapPin, Package, Heart, Skull } from "lucide-react";
+import { Badge } from "./ui/RpgBadge";
+import { Clock, Map, Cloud, Activity, Users, Shield, MapPin, Package, Heart, Skull, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 

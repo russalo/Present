@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  # ----------------------------------------------------------------
+  # Job 1: Validate JSON Schema contracts + run pytest fixture tests
+  # ----------------------------------------------------------------
+  validate-schemas:
+    name: Validate Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install jsonschema pytest
+
+      - name: Run schema validation tests
+        run: pytest tests/test_schema_validation.py -v
+
+  # ----------------------------------------------------------------
+  # Job 2: Lint and format-check all Python MCP server code
+  # ----------------------------------------------------------------
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check for lint errors
+        run: ruff check mcp-servers/
+
+      - name: Check formatting
+        run: ruff format --check mcp-servers/
+
+  # ----------------------------------------------------------------
+  # Job 3: TypeScript type-check all libs and artifacts
+  # ----------------------------------------------------------------
+  typecheck-typescript:
+    name: Typecheck TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run TypeScript type checks
+        run: pnpm run typecheck

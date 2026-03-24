@@ -1,0 +1,92 @@
+name: Schema Gate Demo
+
+# Fires on PRs that touch the MCP servers or JSON Schema contracts.
+# Starts the fs-manager server live and proves the four enforcement
+# behaviours that define Project Sentinel's security model.
+
+on:
+  pull_request:
+    paths:
+      - "mcp-servers/**"
+      - "schemas/**"
+
+jobs:
+  smoke-test:
+    name: fs-manager Schema Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install fs-manager dependencies
+        run: pip install -r mcp-servers/fs-manager/requirements.txt
+
+      - name: Start fs-manager in background
+        run: |
+          python mcp-servers/fs-manager/server.py --port 8010 &
+          echo "Server PID: $!"
+
+      - name: Wait for server to be healthy
+        run: |
+          timeout 30 bash -c 'until curl -sf http://localhost:8010/health; do sleep 1; done'
+          echo "fs-manager is up"
+
+      # ── Test 1: Valid payload ── expect 200 ───────────────────────
+      - name: "Gate test 1: valid payload → 200"
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8010/tools/apply_world_update \
+            -H "Content-Type: application/json" \
+            -d @tests/fixtures/valid_world_update.json)
+          echo "Status: $STATUS"
+          [[ "$STATUS" == "200" ]] || (echo "FAIL: expected 200, got $STATUS" && exit 1)
+
+      # ── Test 2: Missing session_id ── expect 422 ──────────────────
+      - name: "Gate test 2: missing session_id → 422"
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8010/tools/apply_world_update \
+            -H "Content-Type: application/json" \
+            -d @tests/fixtures/invalid_missing_session.json)
+          echo "Status: $STATUS"
+          [[ "$STATUS" == "422" ]] || (echo "FAIL: expected 422, got $STATUS" && exit 1)
+
+      # ── Test 3: Path traversal attempt ── expect 422 ─────────────
+      # The schema's target_file pattern rejects ../../ before the
+      # server's path validator even runs — schema is the first gate.
+      - name: "Gate test 3: path traversal → 422"
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8010/tools/apply_world_update \
+            -H "Content-Type: application/json" \
+            -d @tests/fixtures/invalid_path_traversal.json)
+          echo "Status: $STATUS"
+          [[ "$STATUS" == "422" ]] || (echo "FAIL: expected 422, got $STATUS" && exit 1)
+
+      # ── Test 4: Protected field write ── expect 403 ───────────────
+      # Payload passes schema validation but contains a protected field
+      # (unique_id). The server's protected-field guard returns 403.
+      - name: "Gate test 4: protected field write → 403"
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8010/tools/apply_world_update \
+            -H "Content-Type: application/json" \
+            -d '{
+              "session_id": "550e8400-e29b-41d4-a716-446655440000",
+              "log_entry": "Attempting to overwrite a protected identity field.",
+              "updates": [{
+                "target_file": "data/state/core/entities/kael.json",
+                "operation": "update",
+                "data": { "unique_id": "hacked-id", "status": "alive" }
+              }]
+            }')
+          echo "Status: $STATUS"
+          [[ "$STATUS" == "403" ]] || (echo "FAIL: expected 403, got $STATUS" && exit 1)
+
+      - name: All gate tests passed
+        run: echo "Schema gate is holding. All four enforcement behaviours verified."

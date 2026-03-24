@@ -15,16 +15,16 @@ Dependencies:
 import argparse
 import logging
 import os
-from typing import Any
 
 import chromadb
 import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
 import uvicorn
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger("db-vector")
 
 # -------------------------------------------------------------------
@@ -55,11 +55,13 @@ app = FastAPI(
 _pg_conn = None
 _chroma_client = None
 
+
 def get_pg():
     global _pg_conn
     if _pg_conn is None or _pg_conn.closed:
         _pg_conn = psycopg2.connect(POSTGRES_DSN)
     return _pg_conn
+
 
 def get_chroma():
     global _chroma_client
@@ -67,9 +69,11 @@ def get_chroma():
         _chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
     return _chroma_client
 
+
 # -------------------------------------------------------------------
 # MCP Endpoints
 # -------------------------------------------------------------------
+
 
 @app.get("/health")
 async def health():
@@ -87,7 +91,10 @@ async def query_lore(body: dict):
     namespace_filter = body.get("namespace")  # "core", "community", or None for both
 
     if not query_text:
-        raise HTTPException(status_code=422, detail={"code": "MISSING_QUERY", "detail": "query field is required."})
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "MISSING_QUERY", "detail": "query field is required."},
+        )
 
     try:
         chroma = get_chroma()
@@ -118,7 +125,9 @@ async def query_lore(body: dict):
         }
     except Exception as e:
         logger.error(f"query_lore failed: {e}")
-        raise HTTPException(status_code=500, detail={"code": "CHROMA_ERROR", "detail": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "CHROMA_ERROR", "detail": str(e)}
+        )
 
 
 @app.post("/tools/upsert_entity")
@@ -132,7 +141,13 @@ async def upsert_entity(body: dict):
     data = body.get("data", {})
 
     if not entity_type or not name:
-        raise HTTPException(status_code=422, detail={"code": "MISSING_FIELDS", "detail": "entity_type and name are required."})
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "MISSING_FIELDS",
+                "detail": "entity_type and name are required.",
+            },
+        )
 
     table_map = {
         "character": "characters",
@@ -143,36 +158,72 @@ async def upsert_entity(body: dict):
 
     table = table_map.get(entity_type)
     if not table:
-        raise HTTPException(status_code=422, detail={"code": "UNKNOWN_ENTITY_TYPE", "detail": f"Unknown entity_type: {entity_type}"})
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "UNKNOWN_ENTITY_TYPE",
+                "detail": f"Unknown entity_type: {entity_type}",
+            },
+        )
 
     try:
         conn = get_pg()
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(f"SELECT id, unique_id FROM {table} WHERE lower(name) = lower(%s)", (name,))
+            cur.execute(
+                f"SELECT id, unique_id FROM {table} WHERE lower(name) = lower(%s)",
+                (name,),
+            )
             existing = cur.fetchone()
 
             if existing:
-                set_clauses = ", ".join([f"{k} = %s" for k in data.keys() if k not in ("unique_id", "namespace", "created_at", "canon")])
-                values = [v for k, v in data.items() if k not in ("unique_id", "namespace", "created_at", "canon")]
+                set_clauses = ", ".join(
+                    [
+                        f"{k} = %s"
+                        for k in data.keys()
+                        if k not in ("unique_id", "namespace", "created_at", "canon")
+                    ]
+                )
+                values = [
+                    v
+                    for k, v in data.items()
+                    if k not in ("unique_id", "namespace", "created_at", "canon")
+                ]
                 values.append(existing["id"])
                 if set_clauses:
-                    cur.execute(f"UPDATE {table} SET {set_clauses}, updated_at = NOW() WHERE id = %s", values)
+                    cur.execute(
+                        f"UPDATE {table} SET {set_clauses}, updated_at = NOW() WHERE id = %s",
+                        values,
+                    )
                 conn.commit()
-                return {"status": "updated", "id": existing["id"], "unique_id": str(existing["unique_id"])}
+                return {
+                    "status": "updated",
+                    "id": existing["id"],
+                    "unique_id": str(existing["unique_id"]),
+                }
             else:
-                columns = ["name"] + [k for k in data.keys() if k not in ("unique_id", "created_at")]
+                columns = ["name"] + [
+                    k for k in data.keys() if k not in ("unique_id", "created_at")
+                ]
                 placeholders = ", ".join(["%s"] * len(columns))
-                values = [name] + [data[k] for k in data.keys() if k not in ("unique_id", "created_at")]
+                values = [name] + [
+                    data[k] for k in data.keys() if k not in ("unique_id", "created_at")
+                ]
                 cur.execute(
                     f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders}) RETURNING id, unique_id",
                     values,
                 )
                 row = cur.fetchone()
                 conn.commit()
-                return {"status": "created", "id": row["id"], "unique_id": str(row["unique_id"])}
+                return {
+                    "status": "created",
+                    "id": row["id"],
+                    "unique_id": str(row["unique_id"]),
+                }
     except Exception as e:
         logger.error(f"upsert_entity failed: {e}")
-        raise HTTPException(status_code=500, detail={"code": "DB_ERROR", "detail": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "DB_ERROR", "detail": str(e)}
+        )
 
 
 @app.post("/tools/search_context")
@@ -191,16 +242,27 @@ async def search_context(body: dict):
     try:
         conn = get_pg()
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT * FROM characters WHERE lower(current_location) = lower(%s) AND status = 'alive'", (current_location,))
+            cur.execute(
+                "SELECT * FROM characters WHERE lower(current_location) = lower(%s) AND status = 'alive'",
+                (current_location,),
+            )
             context["present_characters"] = cur.fetchall()
 
-            cur.execute("SELECT * FROM locations WHERE lower(name) = lower(%s)", (current_location,))
+            cur.execute(
+                "SELECT * FROM locations WHERE lower(name) = lower(%s)",
+                (current_location,),
+            )
             context["current_location_data"] = cur.fetchone()
 
-            cur.execute("SELECT * FROM factions ORDER BY ABS(player_relation) DESC LIMIT 5")
+            cur.execute(
+                "SELECT * FROM factions ORDER BY ABS(player_relation) DESC LIMIT 5"
+            )
             context["active_factions"] = cur.fetchall()
 
-            cur.execute("SELECT * FROM items WHERE lower(owned_by) = lower(%s) OR lower(location) = lower(%s)", (player_name, current_location))
+            cur.execute(
+                "SELECT * FROM items WHERE lower(owned_by) = lower(%s) OR lower(location) = lower(%s)",
+                (player_name, current_location),
+            )
             context["nearby_items"] = cur.fetchall()
     except Exception as e:
         logger.warning(f"PostgreSQL context fetch failed: {e}")
@@ -209,7 +271,11 @@ async def search_context(body: dict):
         try:
             chroma = get_chroma()
             collection = chroma.get_or_create_collection("sentinel_lore")
-            results = collection.query(query_texts=[query_text], n_results=top_k, include=["documents", "metadatas"])
+            results = collection.query(
+                query_texts=[query_text],
+                n_results=top_k,
+                include=["documents", "metadatas"],
+            )
             context["lore_context"] = [
                 {"document": doc, "metadata": meta}
                 for doc, meta in zip(results["documents"][0], results["metadatas"][0])
@@ -218,6 +284,7 @@ async def search_context(body: dict):
             logger.warning(f"ChromaDB context fetch failed: {e}")
 
     return context
+
 
 # -------------------------------------------------------------------
 # Entry Point
