@@ -226,26 +226,132 @@ The `fs-manager` reads `x-sentinel-protected: true` and adds those keys to a blo
 
 ---
 
-## Diagram: The Full Update Pipeline
+## 6. Architecture Node Graph
+
+How the Inference Node communicates with the Infrastructure Node through the Tailscale mesh and MCP Bridge.
+
+```mermaid
+graph TB
+    subgraph INFERENCE["Inference Node"]
+        Client["🎮 Client\n(User Interface)"]
+        Orch["⚙️ Orchestrator\n(Core Loop)"]
+        DM["🧙 DM Agent\n(Storyteller)"]
+        FE["🔍 Fact-Extractor Agent\n(State Parser)"]
+        LK["📚 Lorekeeper Agent\n(RAG Context)"]
+    end
+
+    subgraph NET["Tailscale Mesh Network"]
+        TS["🔒 Encrypted Tunnel\n(Tailscale IP)"]
+    end
+
+    subgraph INFRA["Infrastructure Node"]
+        subgraph MCP["MCP Bridge"]
+            FSM["fs-manager\n:8010"]
+            DBV["db-vector\n:8011"]
+            GS["git-sync\n:8012"]
+        end
+        subgraph STORAGE["Storage Layer"]
+            PG["PostgreSQL\n+ pgvector"]
+            CB["ChromaDB\n(Vector Store)"]
+            FS["/data/\n├── lore/*.md\n└── state/*.json"]
+            GIT["Git Repository\n(Version Snapshots)"]
+        end
+    end
+
+    Client --> Orch
+    Orch --> DM
+    LK -->|injects context| DM
+    DM --> FE
+    FE -->|world_update payload| Orch
+    Orch -->|validated MCP calls| TS
+    TS --> FSM & DBV & GS
+    FSM --> FS
+    DBV --> PG & CB
+    GS --> GIT
+    CB -.->|RAG query response| TS
+    TS -.->|lore context| LK
+```
+
+---
+
+## 7. Diagram: The Full Update Pipeline
+
+```mermaid
+flowchart TD
+    A["🎮 Player Action\n(Client Node)"] --> B
+
+    subgraph INFERENCE["Inference Node"]
+        B["🧙 DM Agent\nGenerates narrative response"]
+        B --> C["📖 Story Response\n(human-readable text)"]
+        C --> D["🔍 Fact-Extractor Agent\nParses &lt;world_update&gt; JSON tags"]
+    end
+
+    D --> E{"⚙️ JSON Schema Validation\napply_world_update.schema.json"}
+    E -->|"❌ Invalid payload"| ERR["🚫 Reject & Log\nError fed back to DM"]
+    ERR --> B
+
+    E -->|"✅ Valid payload"| G["🔀 MCP Server Router"]
+
+    subgraph MCP["MCP Bridge (Infrastructure Node)"]
+        G --> H["fs-manager :8010\nEntity / faction state mutations\n→ /data/state/*.json"]
+        G --> I["fs-manager :8010\nSession log appends\n→ /data/lore/*.md"]
+        G --> J["db-vector :8011\nStructured queries + vector upserts\n→ PostgreSQL + ChromaDB"]
+        G --> K["git-sync :8012\nAtomic commit\n→ Git version snapshot"]
+    end
+
+    H & I & J & K --> L["✅ World State Updated"]
+    L --> M["📚 Lorekeeper Agent\nInjects fresh context into\nnext DM context window"]
+    M --> B
+```
+
+---
+
+## 8. The Sentinel Porter (Portability Specification)
+
+To enable a collaborative, decentralized multiverse, Project Sentinel supports the complete export and import of diverged world states. The **Sentinel Porter** is the dedicated subsystem that manages this lifecycle, ensuring that sharing a world is seamless, secure, and privacy-respecting.
+
+### The `.spak` Format
+
+A Sentinel world state is exported as a single compressed archive — a **Sentinel Package (`.spak`)** — structured as a deterministic `.tar.gz`:
 
 ```
-[Player Input]
-      │
-      ▼
-[DM Agent] ─── context loaded from Lorekeeper (Core priority > Community priority)
-      │
-      ▼
-[Fact-Extractor] ─── parses <world_update> JSON
-      │
-      ▼
-[Schema Validator] ─── rejects if malformed, missing required fields, or protected field violation
-      │
-      ▼
-[MCP Router]
-      ├── [fs-manager]  ─── writes to data/state/ and data/lore/sessions/
-      ├── [db-vector]   ─── upserts entity records in PostgreSQL, re-indexes ChromaDB
-      └── [git-sync]    ─── commits snapshot with session_id and turn metadata
-      │
-      ▼
-[Updated Context] ─── injected into next DM prompt
+world_name_v2.spak/
+├── manifest.json          ← schema_version, pack metadata, author
+├── data/
+│   ├── state/             ← entity + faction JSON (no .git history)
+│   └── lore/
+│       └── codex/         ← distilled World Facts only (no raw session logs)
+└── db_export.json         ← structured entity records (no ChromaDB vectors)
+```
+
+Raw session logs (`data/lore/core/sessions/`) are **never included** — they contain PII. Vector embeddings are **never included** — they are re-generated locally to prevent Poisoned RAG attacks.
+
+### The Airlock (Import → Export Lifecycle)
+
+```mermaid
+flowchart TD
+    A["📁 Raw Session Logs\n/data/lore/sessions/*.md\n(OOC chat · real names · local IPs)"]
+
+    subgraph VEIL["🌫️ The Veil  —  Export Scrubber"]
+        A --> B["PII Detection\n(regex scan)"]
+        B --> C["🔐 Repeatable Tokenization\nJohn Doe → &lt;REAL_NAME_1&gt;\n192.168.1.1 → &lt;IP_ADDR_1&gt;\nsk-… → &lt;API_KEY_1&gt;"]
+        C --> D["🚫 Raw logs EXCLUDED from export\nOnly codex.md + distilled World Facts\nare bundled"]
+    end
+
+    D --> E["📦 .spak Builder\ndeterministic tar.gz archive"]
+    E --> F["world_name_v2.spak\n├── manifest.json\n├── data/state/*.json\n├── data/lore/codex/*.md\n└── db_export.json"]
+
+    F --> G
+
+    subgraph AIRLOCK["🔒 The Airlock  —  Import Validator"]
+        G["📂 Isolated Extraction\n→ /tmp/sentinel_airlock/"]
+        G --> H["📋 Version Handshake\nRead manifest.json schema_version\nRun /infrastructure/migrations/ scripts\nif host version &gt; package version"]
+        H --> I["✅ JSON Schema Validation\nEvery .json validated against\nDraft 2020-12 schemas\nOversized or malformed → REJECT"]
+        I --> J["🛣️ Path Sanitization\nBlock ../ traversal attempts\nBlock symlinks outside /data"]
+        J --> K["🔄 Vector Re-Embedding\nDiscard imported ChromaDB vectors\nRe-generate locally from Markdown\n(prevents Poisoned RAG attacks)"]
+        K --> PASS{"Pass / Fail?"}
+    end
+
+    PASS -->|"✅ All checks passed"| M["📥 Promote to /data/\n(live Infrastructure Node)"]
+    PASS -->|"❌ Any check failed"| N["🚫 Import aborted\nSchema conflict log → user"]
 ```

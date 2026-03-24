@@ -1,0 +1,25 @@
+# Project Sentinel — CODEOWNERS
+# Automatically routes PR review requests by contributor pathway.
+# See CONTRIBUTING.md for pathway descriptions (Lore-Smith, Schema-Architect, Technician).
+
+# Schema-Architects own all JSON Schema contracts and core state
+/schemas/                     @russalo
+/data/state/core/             @russalo
+
+# Technicians own MCP servers, infrastructure, and shared libraries
+/mcp-servers/                 @russalo
+/infrastructure/              @russalo
+/lib/                         @russalo
+/artifacts/                   @russalo
+
+# Lore-Smiths own canonical narrative content
+/data/lore/core/              @russalo
+
+# Core team owns all governance documents and GitHub config
+/ARCHITECTURE.md              @russalo
+/CONTRIBUTING.md              @russalo
+/SECURITY.md                  @russalo
+/CODE_OF_CONDUCT.md           @russalo
+/ROADMAP.md                   @russalo
+/CHANGELOG.md                 @russalo
+/.github/                     @russalo

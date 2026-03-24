@@ -68,7 +68,35 @@ Project Sentinel is built by AI, for AI, and with AI. We actively encourage the 
 
 ---
 
-## 4. Local Development Sandbox
+## 4. The Vibe Coder's Guide
+
+**Bring your favorite LLM. We mean it.**
+
+Project Sentinel was itself vibe-coded into existence by a coalition of AI tools (see [Built By the Hive](README.md#built-by-the-hive)). We actively encourage AI-synthesized plugins, MCP servers, and lore packs — provided they strictly adhere to our JSON Schema Draft 2020-12 contracts.
+
+> **The AI writes the code. The Schema enforces the law.**
+
+### Recommended workflow for AI-assisted contributions
+
+1. **Pick a bounty** from [ROADMAP.md](ROADMAP.md) and open an issue using the relevant template.
+2. **Prompt your LLM** with the issue description, the relevant JSON Schema from `/schemas/`, and the existing MCP server at `/mcp-servers/fs-manager/server.py` as a reference implementation.
+3. **Instruct your LLM** to output a FastAPI server that validates its input payload against a JSON Schema *before* executing any writes — the same pattern used in all existing MCP servers.
+4. **Test the schema gate** using the Hello World curl commands in [`docs/QUICKSTART.md`](docs/QUICKSTART.md#step-5-hello-world--prove-the-schema-gate-works).
+5. **Submit your PR** with the `[AI-Assisted]` tag and disclose which tool generated the core logic (Claude Code, Copilot, Gemini, etc.).
+
+### What your LLM needs as context
+
+Share these files when prompting:
+- `schemas/apply_world_update.schema.json` — the master write contract
+- `mcp-servers/fs-manager/server.py` — the reference MCP implementation
+- `ARCHITECTURE.md` — node roles and namespace rules
+- The specific issue template for your contributor pathway
+
+Whether you use Claude Code, Copilot, Gemini, or any other tool — if the code passes schema validation and the test suite, it belongs in Sentinel. The engine doesn't care who wrote it. The schema does.
+
+---
+
+## 5. Local Development Sandbox
 
 You do not need a massive server cluster to build for Sentinel. You can spin up a localized version of the Infrastructure Node directly on your machine.
 
@@ -97,7 +125,7 @@ python -m mcp_servers.db_vector --port 8001 --dev
 
 ### Step 3: Tailscale Mesh (For Remote Testing)
 
-If you are testing the split-node architecture (e.g., Inference on a Mac, Infrastructure on Linux), ensure both machines are authenticated on your Tailscale network. Set `TAILSCALE_BIND_IP` in your `.env` to the Infrastructure Node's Tailscale IP (`100.x.y.z`). This restricts database traffic exclusively to your secure mesh — both nodes are invisible to the public internet.
+If you are testing the split-node architecture (e.g., the Inference Node on one machine and the Infrastructure Node on another), ensure both machines are authenticated on your Tailscale network. Set `TAILSCALE_BIND_IP` in your `.env` to the Infrastructure Node's Tailscale IP (`100.x.y.z`). This restricts database traffic exclusively to your secure mesh — both nodes are invisible to the public internet.
 
 ### Step 4: Run the Reference Implementation
 
@@ -109,7 +137,7 @@ pnpm --filter @workspace/api-server run dev
 
 ---
 
-## 5. Coding Standards: The Schema Ironclad
+## 6. Coding Standards: The Schema Ironclad
 
 The golden rule of Project Sentinel: **The AI is never granted raw filesystem access.**
 

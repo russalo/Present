@@ -1,10 +1,28 @@
 # Project Sentinel
 
-**Autonomous, Persistent RPG World Engine.**
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Node 24](https://img.shields.io/badge/node-24-339933.svg?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![MCP Powered](https://img.shields.io/badge/MCP-powered-blueviolet.svg)](https://modelcontextprotocol.io)
 
-Project Sentinel is a distributed, "Zero-Touch" role-playing environment. It separates high-level LLM orchestration (Inference Node) from strict world-state management (Infrastructure Node) using the Model Context Protocol (MCP).
+**What if your RPG world kept evolving while you slept?**
 
-**The user's only interface is the narrative. The system handles the infrastructure.**
+Project Sentinel is an autonomous world engine that keeps a living, breathing RPG universe running without a human dungeon master at the wheel. Every player action flows through an LLM storytelling agent, gets parsed for world-state changes by a Fact-Extractor, and is committed to a Git-backed infrastructure — automatically, atomically, and without touching a single file by hand.
+
+The secret: the Inference Node is **never granted direct filesystem access**. All world mutations route through local MCP servers that validate every write against JSON Schema contracts before anything persists. The result is an AI that can run your campaign for months, maintain narrative consistency across thousands of turns, and never corrupt your world state.
+
+> **The user's only interface is the narrative. The system handles everything else.**
+
+---
+
+## How It Works: Agentic Architecture
+
+Sentinel is built on a pattern called **LLM Orchestration over a Schema-Enforced Infrastructure**. Three specialist agents — a Dungeon Master, a Fact-Extractor, and a Lorekeeper — run as an agentic loop on the Inference Node. They talk to each other through structured prompts, not function calls.
+
+The Inference Node never touches files. When the DM generates a story beat that changes the world, the Fact-Extractor agent parses the response and emits a structured `<world_update>` JSON payload. That payload travels across the MCP Bridge to the Infrastructure Node, where it is validated against a Draft 2020-12 JSON Schema before a single byte is written to disk.
+
+This is **Prompt-Driven Development** at the infrastructure level: the narrative is the API, the schema is the contract, and the MCP server is the enforcer. Contributors can literally describe a new game mechanic in natural language to their LLM of choice, and if the generated MCP server adheres to the schema contract, the engine picks it up automatically — Zero-Touch File I/O by design.
 
 ---
 
@@ -13,7 +31,7 @@ Project Sentinel is a distributed, "Zero-Touch" role-playing environment. It sep
 Sentinel operates on a strict separation of concerns to enable seamless remote play via a Tailscale mesh network.
 
 1. **Inference Node** (`/world-engine`): Houses the DM, Fact-Extractor, and Lorekeeper agents. It evaluates user input, queries the world state, and outputs rich narrative alongside machine-readable `<world_update>` tags.
-2. **Infrastructure Node** (`/infrastructure`): The Linux-based storage layer. It manages the PostgreSQL/Vector database, background simulations, and a Git-backed hybrid filesystem (JSON for state, Markdown for lore).
+2. **Infrastructure Node** (`/infrastructure`): The persistent storage layer. It manages the PostgreSQL/Vector database, background simulations, and a Git-backed hybrid filesystem (JSON for state, Markdown for lore).
 3. **The MCP Bridge** (`/mcp-servers`): The Inference Node *never* touches files directly. It issues structured requests to local MCP servers on the Infrastructure Node, which validate and execute filesystem, database, and git operations.
 
 ```text
@@ -54,25 +72,32 @@ project-sentinel/
 
 ## The Core Loop
 
-```
-Player Action
-     │
-     ▼
-DM Agent (Inference Node)
-     │  generates narrative
-     ▼
-Fact-Extractor Agent
-     │  parses <world_update> JSON tag
-     ▼
-MCP Server Router
-     │
-     ├── fs-manager  ──► /data/state/*.json  (entity/faction mutations)
-     ├── fs-manager  ──► /data/lore/*.md     (session log appends)
-     ├── db-vector   ──► PostgreSQL + ChromaDB (structured queries + RAG)
-     └── git-sync    ──► Local Git commit     (version snapshot)
-     │
-     ▼
-Updated World State loaded into next DM context window
+```mermaid
+flowchart TD
+    A["🎮 Player Action\n(Client Node)"] --> B
+
+    subgraph INFERENCE["Inference Node"]
+        B["🧙 DM Agent\nGenerates narrative response"]
+        B --> C["📖 Story Response\n(human-readable text)"]
+        C --> D["🔍 Fact-Extractor Agent\nParses &lt;world_update&gt; JSON tags"]
+    end
+
+    D --> E{"⚙️ JSON Schema Validation\napply_world_update.schema.json"}
+    E -->|"❌ Invalid payload"| ERR["🚫 Reject & Log\nError fed back to DM"]
+    ERR --> B
+
+    E -->|"✅ Valid payload"| G["🔀 MCP Server Router"]
+
+    subgraph MCP["MCP Bridge (Infrastructure Node)"]
+        G --> H["fs-manager :8010\nEntity / faction state mutations\n→ /data/state/*.json"]
+        G --> I["fs-manager :8010\nSession log appends\n→ /data/lore/*.md"]
+        G --> J["db-vector :8011\nStructured queries + vector upserts\n→ PostgreSQL + ChromaDB"]
+        G --> K["git-sync :8012\nAtomic commit\n→ Git version snapshot"]
+    end
+
+    H & I & J & K --> L["✅ World State Updated"]
+    L --> M["📚 Lorekeeper Agent\nInjects fresh context into\nnext DM context window"]
+    M --> B
 ```
 
 1. **Action**: User inputs a role-play action via the Client Node.
@@ -147,6 +172,24 @@ python orchestrator/main.py
 ## Live Demo
 
 A fully functional reference implementation of Project Sentinel (React frontend + Express backend + PostgreSQL) is available at the repository root. See the `artifacts/` directory.
+
+---
+
+## Built By the Hive
+
+Project Sentinel v0.1 was vibe-coded and architected through a coalition of AI tools. We think that's worth celebrating.
+
+| Contributor | Role in Genesis |
+|---|---|
+| **Google Gemini** (AI Studio) | System architecture, schema design, and the Sentinel Porter / Airlock specification |
+| **Anthropic Claude** | CONTRIBUTING guidelines, security policy, and MCP server hardening |
+| **OpenAI** | DM persona prompts, Fact-Extractor agent definitions, and the `gpt-5-mini` reference implementation |
+| **Replit** | Full-stack scaffolding, live development environment, and the React + Express artifact |
+| **GitHub Copilot** | Inline completions, test generation, and TypeScript library boilerplate |
+
+In 2026, the best open-source projects are human-directed and AI-synthesized. Sentinel is proof of concept. The humans set the vision, held the architecture accountable, and enforced the schema contracts. The AI did the heavy lifting.
+
+**You are welcome to do the same.** See [The Vibe Coder's Guide](CONTRIBUTING.md#4-the-vibe-coders-guide) in CONTRIBUTING.md.
 
 ---
 
