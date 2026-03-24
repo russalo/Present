@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For smooth transitions, typewriter effects, and magical glowing animations"
+  "lucide-react": "Icons for the UI"
+  "clsx": "Class merging utility"
+  "tailwind-merge": "Class merging utility for Tailwind"
+  "date-fns": "For formatting timestamps"
+images:
+  - path: "artifacts/rpg-engine/public/images/bg-texture.png"
+    description: "Dark, moody, seamless grunge stone and old medieval parchment texture, very low contrast, almost black, gothic aesthetic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/rpg-engine/public/images/dm-avatar.png"
+    description: "A mysterious hooded dungeon master figure bathed in minimal glowing gold and cyan rim light, dark background, detailed digital painting"
+    aspect_ratio: "1:1"
+notes:
+  - "The app assumes the API provides session singletons via standard generated Orval hooks."
