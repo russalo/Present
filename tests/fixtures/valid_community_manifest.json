@@ -1,0 +1,17 @@
+{
+  "pack_id": "trog-core-v1",
+  "author": "contributor-01",
+  "version": "0.1.0",
+  "description": "The city of Trog starter pack — 10 NPCs, 5 factions, 3 locations, and a lore codex.",
+  "sentinel_min_version": "0.1.0",
+  "adds": {
+    "locations": ["Trog Tavern", "The Iron Market", "Old Gate Quarter"],
+    "npcs": ["Grimdal the Innkeeper", "Mira Ashveil"],
+    "factions": ["The Iron Compact"]
+  },
+  "lore_files": [
+    "data/lore/community/trog-core/the-city-of-trog.md",
+    "data/lore/community/trog-core/grimdal-the-innkeeper.md"
+  ],
+  "rag_priority": 8
+}

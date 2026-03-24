@@ -1,0 +1,12 @@
+{
+  "log_entry": "Kael enters the tavern.",
+  "updates": [
+    {
+      "target_file": "data/state/core/entities/kael.json",
+      "operation": "update",
+      "data": {
+        "status": "alive"
+      }
+    }
+  ]
+}
