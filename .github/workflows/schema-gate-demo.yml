@@ -24,7 +24,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install fs-manager dependencies
-        run: pip install fastapi "uvicorn[standard]" jsonschema pydantic
+        run: pip install -r mcp-servers/fs-manager/requirements.txt
 
       - name: Start fs-manager in background
         run: |
