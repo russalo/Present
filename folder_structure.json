@@ -1,0 +1,111 @@
+{
+  "project_name": "Project Sentinel",
+  "version": "0.1.0",
+  "description": "Autonomous, Persistent RPG World Engine — distributed-first layout separating machine logic from narrative lore.",
+  "root": {
+    "data": {
+      "description": "Hybrid Storage Layer — the single source of truth for all world state and lore.",
+      "lore": {
+        "description": "Human-readable narrative (Markdown). Indexed into ChromaDB for RAG retrieval.",
+        "core": {
+          "description": "Canonical world truth. Maintained by Core team only. Read-only for community contributions.",
+          "codex": "World history, cosmology, locations, and primary faction lore.",
+          "sessions": "Official session transcripts and turn logs."
+        },
+        "community": {
+          "description": "Community lore packs. Segregated per author handle. Lower RAG priority than core/.",
+          "<author-handle>": {
+            "community.json": "Pack manifest — declares all new content and references.",
+            "codex": "Community codex entries.",
+            "npcs": "Community NPC histories."
+          }
+        }
+      },
+      "state": {
+        "description": "Machine-readable current world state (JSON). Validated against /schemas/ on every write.",
+        "core": {
+          "description": "Primary world state. Only writable by Core MCP servers with authorization token.",
+          "entities": "NPCs, player characters, enemies, and their live attributes.",
+          "factions": "Faction standings, resources, and player relationship scores."
+        },
+        "community": {
+          "description": "Community-contributed state extensions. Cannot overwrite core fields."
+        }
+      }
+    },
+    "infrastructure": {
+      "description": "Node Backbone (The Brawn) — databases, network config, and migration scripts.",
+      "docker-compose.yml": "Spins up PostgreSQL 16 and ChromaDB with Tailscale mesh binding.",
+      ".env.example": "Environment variable template. Copy to .env and fill in credentials.",
+      "migrations": {
+        "description": "SQL scripts auto-executed by PostgreSQL on fresh boot (initdb.d mount).",
+        "001_init_world_state.sql": "Creates core entity, faction, and session tables.",
+        "002_community_metadata.sql": "Creates community pack registry table."
+      },
+      "tailscale": {
+        "description": "Tailscale ACL policies and mesh configuration for split-node deployments.",
+        "acl.json": "Access control list — restricts DB ports to Tailscale mesh only."
+      }
+    },
+    "mcp-servers": {
+      "description": "The Bridge — Model Context Protocol servers connecting the Inference Node to the Infrastructure Node.",
+      "fs-manager": {
+        "description": "Zero-Touch file handler. Validates all writes against JSON Schema before executing CRUD on /data.",
+        "server.py": "FastAPI MCP server exposing apply_world_update and read_state tools.",
+        "validator.py": "JSON Schema Draft 2020-12 validation layer — the gatekeeper.",
+        "requirements.txt": "Python dependencies (fastapi, jsonschema, pydantic).",
+        "tests": "Automated test suite covering schema rejection, path traversal prevention, and successful writes."
+      },
+      "db-vector": {
+        "description": "RAG/DB interface — routes semantic queries to ChromaDB and structured queries to PostgreSQL.",
+        "server.py": "MCP server exposing query_lore, upsert_entity, and search_context tools.",
+        "requirements.txt": "Python dependencies (chromadb, psycopg2, sentence-transformers).",
+        "tests": "Test suite for vector query accuracy and DB connection resilience."
+      },
+      "git-sync": {
+        "description": "Automated version control — commits after each world update with session metadata.",
+        "server.py": "MCP server exposing commit_snapshot tool.",
+        "requirements.txt": "Python dependencies (gitpython).",
+        "tests": "Test suite for commit generation and rollback recovery."
+      }
+    },
+    "schemas": {
+      "description": "Shared JSON Schema contracts (Draft 2020-12) validating all MCP tool payloads and state files.",
+      "apply_world_update.schema.json": "Strict input schema for the fs-manager's primary write tool.",
+      "community_manifest.schema.json": "Schema validating community.json pack manifests.",
+      "entity.schema.json": "Schema for NPC/player entity state objects.",
+      "faction.schema.json": "Schema for faction state objects.",
+      "location.schema.json": "Schema for location state objects.",
+      "item.schema.json": "Schema for item state objects."
+    },
+    "world-engine": {
+      "description": "Inference & Orchestration (The Brain) — LLM agents and the core turn-processing loop.",
+      "agents": {
+        "description": "Prompt boundaries and persona definitions for each specialized agent.",
+        "dm.yaml": "Dungeon Master — storyteller, rule arbiter, narrative generator.",
+        "fact-extractor.yaml": "Parses DM narrative into structured <world_update> JSON events.",
+        "lorekeeper.yaml": "Manages RAG context injection — queries ChromaDB, prioritizes Core over Community."
+      },
+      "orchestrator": {
+        "description": "The Core Loop — routes player input through the full Action → Narrative → Extract → Update pipeline.",
+        "main.py": "Primary event loop. Entry point for the Inference Node."
+      },
+      "simulation": {
+        "description": "Background world progression — cron-driven events that mutate world state without player input.",
+        "scheduler.py": "Time-based simulation tick (faction movements, weather changes, NPC actions)."
+      }
+    },
+    ".github": {
+      "ISSUE_TEMPLATE": {
+        "lore_entry.md": "Lore-Smith template for new NPCs, locations, and codex entries.",
+        "mcp_tool.md": "Technician template for new Python MCP server tools.",
+        "schema_refinement.md": "Architect template for JSON state model updates."
+      },
+      "PULL_REQUEST_TEMPLATE.md": "Standard PR template enforcing contributor pathway declaration."
+    },
+    "README.md": "Project overview, architecture diagram, and bootstrap instructions.",
+    "CONTRIBUTING.md": "Contributor pathways (Lore-Smith, Schema-Architect, Technician) and coding standards.",
+    "ARCHITECTURE.md": "Core vs. Community framework, namespace separation, override hierarchy, and protected fields.",
+    "folder_structure.json": "This file — machine-readable repo manifest for agent and contributor tooling."
+  }
+}

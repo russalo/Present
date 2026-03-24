@@ -1,0 +1,233 @@
+"""
+Project Sentinel — fs-manager MCP Server
+
+Zero-Touch filesystem handler. Validates all write payloads against
+the apply_world_update JSON Schema before executing any CRUD operations
+on /data. The Inference Node is never granted raw filesystem access.
+
+Usage:
+    python server.py --port 8010
+
+Dependencies:
+    pip install -r requirements.txt
+"""
+
+import argparse
+import json
+import logging
+import re
+from pathlib import Path
+from typing import Any
+
+import jsonschema
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+import uvicorn
+
+# -------------------------------------------------------------------
+# Configuration
+# -------------------------------------------------------------------
+
+REPO_ROOT = Path(__file__).parent.parent.parent
+DATA_DIR = REPO_ROOT / "data"
+SCHEMA_DIR = REPO_ROOT / "schemas"
+SCHEMA_PATH = SCHEMA_DIR / "apply_world_update.schema.json"
+
+# Protected fields that can never be modified by community payloads
+PROTECTED_FIELDS = {"unique_id", "world_seed", "namespace", "created_at", "canon"}
+
+# Allowed write paths (regex must match target_file)
+ALLOWED_PATH_PATTERN = re.compile(
+    r"^(data/state/(core|community)/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+\.json"
+    r"|data/lore/(core/sessions|community/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)/[a-zA-Z0-9_-]+\.md)$"
+)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("fs-manager")
+
+# -------------------------------------------------------------------
+# Schema Loading
+# -------------------------------------------------------------------
+
+def load_schema() -> dict:
+    with open(SCHEMA_PATH) as f:
+        return json.load(f)
+
+SCHEMA = load_schema()
+
+# -------------------------------------------------------------------
+# FastAPI App
+# -------------------------------------------------------------------
+
+app = FastAPI(
+    title="Sentinel fs-manager MCP Server",
+    description="Zero-Touch filesystem handler for Project Sentinel.",
+    version="0.1.0",
+)
+
+# -------------------------------------------------------------------
+# Validation Layer
+# -------------------------------------------------------------------
+
+def validate_payload(payload: dict) -> None:
+    """Validate payload against JSON Schema. Raises HTTPException on failure."""
+    try:
+        jsonschema.validate(instance=payload, schema=SCHEMA)
+    except jsonschema.ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "VALIDATION_ERROR", "detail": e.message, "path": list(e.path)},
+        )
+    except jsonschema.SchemaError as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "SCHEMA_ERROR", "detail": str(e)},
+        )
+
+
+def check_protected_fields(data: Any, target_file: str) -> None:
+    """Reject payloads that attempt to modify protected fields."""
+    if not isinstance(data, dict):
+        return
+    violations = [f for f in PROTECTED_FIELDS if f in data]
+    if violations:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "PROTECTED_FIELD_VIOLATION",
+                "detail": f"Attempted to modify protected field(s): {violations} in {target_file}",
+            },
+        )
+
+
+def validate_path(target_file: str) -> None:
+    """Ensure the target path matches the allowed pattern."""
+    if not ALLOWED_PATH_PATTERN.match(target_file):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "PATH_VIOLATION",
+                "detail": f"target_file '{target_file}' is outside the allowed write paths.",
+            },
+        )
+
+# -------------------------------------------------------------------
+# File Operations
+# -------------------------------------------------------------------
+
+def execute_update(target_file: str, operation: str, data: Any, protected_check: bool = True) -> dict:
+    """Execute a single file operation after all validation passes."""
+    abs_path = REPO_ROOT / target_file
+    abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if operation == "create":
+        if abs_path.exists():
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "FILE_EXISTS", "detail": f"{target_file} already exists. Use 'update' to modify."},
+            )
+        content = json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data)
+        abs_path.write_text(content)
+        return {"status": "created", "path": target_file}
+
+    elif operation == "update":
+        if protected_check and isinstance(data, dict):
+            check_protected_fields(data, target_file)
+
+        if abs_path.exists() and target_file.endswith(".json"):
+            existing = json.loads(abs_path.read_text())
+            if isinstance(existing, dict) and isinstance(data, dict):
+                existing.update(data)
+                data = existing
+        abs_path.write_text(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data))
+        return {"status": "updated", "path": target_file}
+
+    elif operation == "append":
+        if not isinstance(data, str):
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "VALIDATION_ERROR", "detail": "append operation requires string data."},
+            )
+        with open(abs_path, "a") as f:
+            f.write("\n" + data)
+        return {"status": "appended", "path": target_file}
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "UNKNOWN_OPERATION", "detail": f"Unknown operation: {operation}"},
+        )
+
+# -------------------------------------------------------------------
+# MCP Endpoints
+# -------------------------------------------------------------------
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "server": "fs-manager", "version": "0.1.0"}
+
+
+@app.post("/tools/apply_world_update")
+async def apply_world_update(request: Request):
+    """
+    Primary write tool. Validates and executes a batch of filesystem
+    modifications as specified by the apply_world_update JSON Schema.
+    """
+    payload = await request.json()
+    logger.info(f"apply_world_update — session_id={payload.get('session_id')}, updates={len(payload.get('updates', []))}")
+
+    validate_payload(payload)
+
+    results = []
+    for update in payload["updates"]:
+        target_file = update["target_file"]
+        operation = update["operation"]
+        data = update["data"]
+        protected_check = update.get("protected_check", True)
+
+        validate_path(target_file)
+        result = execute_update(target_file, operation, data, protected_check)
+        results.append(result)
+
+    # Append narrative to session log
+    session_log_path = f"data/lore/core/sessions/{payload['session_id']}.md"
+    abs_log = REPO_ROOT / session_log_path
+    abs_log.parent.mkdir(parents=True, exist_ok=True)
+    with open(abs_log, "a") as f:
+        f.write(f"\n\n---\n\n{payload['log_entry']}")
+
+    logger.info(f"apply_world_update — success, {len(results)} operations executed.")
+    return JSONResponse({"success": True, "session_id": payload["session_id"], "results": results})
+
+
+@app.get("/tools/read_state")
+async def read_state(path: str):
+    """
+    Read a state or lore file. Validates the path before reading.
+    """
+    validate_path(path)
+    abs_path = REPO_ROOT / path
+    if not abs_path.exists():
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": f"{path} does not exist."})
+
+    content = abs_path.read_text()
+    if path.endswith(".json"):
+        return {"path": path, "data": json.loads(content)}
+    return {"path": path, "data": content}
+
+# -------------------------------------------------------------------
+# Entry Point
+# -------------------------------------------------------------------
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Sentinel fs-manager MCP Server")
+    parser.add_argument("--port", type=int, default=8010)
+    parser.add_argument("--host", type=str, default="127.0.0.1")
+    parser.add_argument("--dev", action="store_true", help="Enable development mode (verbose logging)")
+    args = parser.parse_args()
+
+    if args.dev:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    logger.info(f"Starting fs-manager on {args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)

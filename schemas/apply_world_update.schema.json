@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinel.local/schemas/apply_world_update.json",
+  "title": "Apply World Update Payload",
+  "description": "Strict contract for the fs-manager MCP server to execute safe, zero-touch filesystem modifications across hybrid storage layers. The Inference Node must conform to this schema exactly — any deviation is rejected before execution.",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The UUID of the current active role-play session. Required for continuity and audit logging."
+    },
+    "log_entry": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 4000,
+      "description": "Human-readable narrative summary of the action. Appended to the session's Markdown transcript in data/lore/core/sessions/."
+    },
+    "updates": {
+      "type": "array",
+      "description": "A batch array of explicit file modification operations. All operations are validated and executed atomically.",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "properties": {
+          "target_file": {
+            "type": "string",
+            "pattern": "^(data/state/(core|community)/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+\\.json|data/lore/(core/sessions|community/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)/[a-zA-Z0-9_-]+\\.md)$",
+            "description": "Relative path to the target file. Strictly restricted by regex to prevent directory traversal attacks. Community writes are sandboxed to their own namespace."
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["update", "create", "append"],
+            "description": "The CRUD operation to perform. 'update' merges data into existing JSON. 'create' writes a new file (fails if exists). 'append' concatenates string content to Markdown files."
+          },
+          "data": {
+            "type": ["object", "string", "array"],
+            "description": "The payload. Must be a JSON object or array for data/state/ targets. Must be a string for data/lore/ append operations."
+          },
+          "protected_check": {
+            "type": "boolean",
+            "default": true,
+            "description": "If true (default), the fs-manager will reject any attempt to modify protected fields (unique_id, world_seed, namespace, created_at, canon)."
+          }
+        },
+        "required": ["target_file", "operation", "data"],
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for logging and debugging.",
+      "properties": {
+        "agent": {
+          "type": "string",
+          "enum": ["dm", "fact-extractor", "lorekeeper", "simulation", "orchestrator"],
+          "description": "Which agent generated this world update."
+        },
+        "turn_number": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional confidence score from the Fact-Extractor (0.0 to 1.0)."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["session_id", "log_entry", "updates"],
+  "additionalProperties": false
+}

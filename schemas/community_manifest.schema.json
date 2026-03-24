@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinel.local/schemas/community_manifest.json",
+  "title": "Community Content Pack Manifest",
+  "description": "Every community content pack must include this manifest. It declares all new content, references to core entities, and registers lore files for ChromaDB indexing.",
+  "type": "object",
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,32}$",
+      "description": "Unique, kebab-case identifier for this content pack. Must be globally unique."
+    },
+    "author": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{2,39}$",
+      "description": "GitHub handle or org name of the primary contributor."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this pack."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Human-readable description of what this pack adds to the world."
+    },
+    "sentinel_min_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Minimum Sentinel engine version required to use this pack."
+    },
+    "adds": {
+      "type": "object",
+      "description": "Declarations of net-new content this pack introduces. Community content cannot overwrite Core entities.",
+      "properties": {
+        "locations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of new locations introduced by this pack."
+        },
+        "npcs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of new NPCs introduced by this pack."
+        },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of new items introduced by this pack."
+        },
+        "factions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of new factions introduced by this pack."
+        },
+        "mcp_tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of new MCP server tools bundled with this pack."
+        }
+      },
+      "additionalProperties": false
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "Core entity unique_ids this pack references but does NOT modify. Declared for dependency tracking."
+    },
+    "lore_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^data/lore/community/.+\\.md$"
+      },
+      "description": "All Markdown lore files in this pack, registered for ChromaDB indexing. Paths must be under data/lore/community/."
+    },
+    "rag_priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9,
+      "default": 5,
+      "description": "ChromaDB retrieval priority for this pack's documents. Core lore always uses priority 10. Community packs use 1-9."
+    }
+  },
+  "required": ["pack_id", "author", "version", "description", "adds", "lore_files"],
+  "additionalProperties": false
+}
