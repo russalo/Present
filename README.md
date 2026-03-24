@@ -1,6 +1,6 @@
 # Project Sentinel
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Node 24](https://img.shields.io/badge/node-24-339933.svg?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -193,6 +193,14 @@ In 2026, the best open-source projects are human-directed and AI-synthesized. Se
 
 ---
 
-## License
+## License & Legal
 
-MIT — Build worlds. Share them.
+Project Sentinel is licensed under the **Apache License 2.0**. In plain English:
+
+- You can use, modify, and distribute this project (including for commercial use).
+- The project is provided **"AS IS"**, without warranties; maintainers and contributors are not liable for damages resulting from use.
+- Contributors grant a patent license for their contributions under Apache 2.0, with patent-retaliation protections if someone files patent litigation over the project.
+
+We may offer future versions or separate editions under additional licensing terms (including commercial terms). This repository remains available under Apache 2.0 unless explicitly stated otherwise for a specific release or component.
+
+See [`LICENSE`](LICENSE) for the legally binding terms.

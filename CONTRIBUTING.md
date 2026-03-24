@@ -67,6 +67,27 @@ Project Sentinel is built by AI, for AI, and with AI. We actively encourage the 
 - **Encouraged uses:** AI-generated test suites, AI-assisted Markdown lore drafts, AI-generated migration scripts with human review.
 
 ---
+### DCO sign-off (required)
+
+Project Sentinel uses the **Developer Certificate of Origin (DCO)** instead of a CLA.
+
+Please sign off every commit:
+
+```bash
+git commit -s -m "feat: add schema validation for new world event"
+```
+
+This adds a footer like:
+
+```text
+Signed-off-by: Your Name <you@example.com>
+```
+
+Forgot to sign off? Amend the commit:
+
+```bash
+git commit --amend -s
+```
 
 ## 4. The Vibe Coder's Guide
 
