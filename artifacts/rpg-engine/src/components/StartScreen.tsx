@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useStartNewSession } from "@workspace/api-client-react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/RpgButton";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Sparkles, BookOpen } from "lucide-react";

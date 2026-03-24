@@ -14,16 +14,16 @@ Dependencies:
 
 import argparse
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 
 import git
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
 import uvicorn
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger("git-sync")
 
 REPO_ROOT = Path(__file__).parent.parent.parent
@@ -55,7 +55,10 @@ async def commit_snapshot(body: dict):
     summary = body.get("summary", "World state update")
 
     if not session_id:
-        raise HTTPException(status_code=422, detail={"code": "MISSING_SESSION_ID", "detail": "session_id is required."})
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "MISSING_SESSION_ID", "detail": "session_id is required."},
+        )
 
     try:
         repo = get_repo()
@@ -73,14 +76,29 @@ async def commit_snapshot(body: dict):
         repo.index.commit(commit_message)
         commit_hash = repo.head.commit.hexsha[:8]
 
-        logger.info(f"commit_snapshot — {commit_hash} | session={session_id[:8]} turn={turn_number}")
-        return {"status": "committed", "commit": commit_hash, "session_id": session_id, "turn_number": turn_number}
+        logger.info(
+            f"commit_snapshot — {commit_hash} | session={session_id[:8]} turn={turn_number}"
+        )
+        return {
+            "status": "committed",
+            "commit": commit_hash,
+            "session_id": session_id,
+            "turn_number": turn_number,
+        }
 
     except git.InvalidGitRepositoryError:
-        raise HTTPException(status_code=500, detail={"code": "GIT_ERROR", "detail": "Repository not found at REPO_ROOT."})
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "GIT_ERROR",
+                "detail": "Repository not found at REPO_ROOT.",
+            },
+        )
     except Exception as e:
         logger.error(f"commit_snapshot failed: {e}")
-        raise HTTPException(status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)}
+        )
 
 
 @app.get("/tools/list_snapshots")
@@ -96,14 +114,18 @@ async def list_snapshots(session_id: str | None = None, limit: int = 20):
                 continue
             if session_id and session_id[:8] not in commit.message:
                 continue
-            results.append({
-                "hash": commit.hexsha[:8],
-                "message": commit.message.split("\n")[0],
-                "timestamp": commit.authored_datetime.isoformat(),
-            })
+            results.append(
+                {
+                    "hash": commit.hexsha[:8],
+                    "message": commit.message.split("\n")[0],
+                    "timestamp": commit.authored_datetime.isoformat(),
+                }
+            )
         return {"snapshots": results}
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)}
+        )
 
 
 @app.post("/tools/rollback_to")
@@ -114,7 +136,10 @@ async def rollback_to(body: dict):
     """
     commit_hash = body.get("commit_hash")
     if not commit_hash:
-        raise HTTPException(status_code=422, detail={"code": "MISSING_HASH", "detail": "commit_hash is required."})
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "MISSING_HASH", "detail": "commit_hash is required."},
+        )
 
     try:
         repo = get_repo()
@@ -123,7 +148,9 @@ async def rollback_to(body: dict):
         repo.index.commit(f"[sentinel] rollback to {commit_hash}")
         return {"status": "rolled_back", "to_commit": commit_hash}
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "GIT_ERROR", "detail": str(e)}
+        )
 
 
 if __name__ == "__main__":

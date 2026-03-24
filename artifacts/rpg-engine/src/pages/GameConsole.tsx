@@ -3,7 +3,7 @@ import { useGetSessionLog, useProcessTurn } from "@workspace/api-client-react";
 import { StartScreen } from "@/components/StartScreen";
 import { WorldSidebar } from "@/components/WorldSidebar";
 import { NarrativePanel } from "@/components/NarrativePanel";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/RpgButton";
 import { Terminal, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 

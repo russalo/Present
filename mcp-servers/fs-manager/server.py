@@ -42,16 +42,20 @@ ALLOWED_PATH_PATTERN = re.compile(
     r"|data/lore/(core/sessions|community/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)/[a-zA-Z0-9_-]+\.md)$"
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger("fs-manager")
 
 # -------------------------------------------------------------------
 # Schema Loading
 # -------------------------------------------------------------------
 
+
 def load_schema() -> dict:
     with open(SCHEMA_PATH) as f:
         return json.load(f)
+
 
 SCHEMA = load_schema()
 
@@ -69,6 +73,7 @@ app = FastAPI(
 # Validation Layer
 # -------------------------------------------------------------------
 
+
 def validate_payload(payload: dict) -> None:
     """Validate payload against JSON Schema. Raises HTTPException on failure."""
     try:
@@ -76,7 +81,11 @@ def validate_payload(payload: dict) -> None:
     except jsonschema.ValidationError as e:
         raise HTTPException(
             status_code=422,
-            detail={"code": "VALIDATION_ERROR", "detail": e.message, "path": list(e.path)},
+            detail={
+                "code": "VALIDATION_ERROR",
+                "detail": e.message,
+                "path": list(e.path),
+            },
         )
     except jsonschema.SchemaError as e:
         raise HTTPException(
@@ -111,11 +120,15 @@ def validate_path(target_file: str) -> None:
             },
         )
 
+
 # -------------------------------------------------------------------
 # File Operations
 # -------------------------------------------------------------------
 
-def execute_update(target_file: str, operation: str, data: Any, protected_check: bool = True) -> dict:
+
+def execute_update(
+    target_file: str, operation: str, data: Any, protected_check: bool = True
+) -> dict:
     """Execute a single file operation after all validation passes."""
     abs_path = REPO_ROOT / target_file
     abs_path.parent.mkdir(parents=True, exist_ok=True)
@@ -124,9 +137,14 @@ def execute_update(target_file: str, operation: str, data: Any, protected_check:
         if abs_path.exists():
             raise HTTPException(
                 status_code=409,
-                detail={"code": "FILE_EXISTS", "detail": f"{target_file} already exists. Use 'update' to modify."},
+                detail={
+                    "code": "FILE_EXISTS",
+                    "detail": f"{target_file} already exists. Use 'update' to modify.",
+                },
             )
-        content = json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data)
+        content = (
+            json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data)
+        )
         abs_path.write_text(content)
         return {"status": "created", "path": target_file}
 
@@ -139,14 +157,19 @@ def execute_update(target_file: str, operation: str, data: Any, protected_check:
             if isinstance(existing, dict) and isinstance(data, dict):
                 existing.update(data)
                 data = existing
-        abs_path.write_text(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data))
+        abs_path.write_text(
+            json.dumps(data, indent=2) if isinstance(data, (dict, list)) else str(data)
+        )
         return {"status": "updated", "path": target_file}
 
     elif operation == "append":
         if not isinstance(data, str):
             raise HTTPException(
                 status_code=422,
-                detail={"code": "VALIDATION_ERROR", "detail": "append operation requires string data."},
+                detail={
+                    "code": "VALIDATION_ERROR",
+                    "detail": "append operation requires string data.",
+                },
             )
         with open(abs_path, "a") as f:
             f.write("\n" + data)
@@ -155,12 +178,17 @@ def execute_update(target_file: str, operation: str, data: Any, protected_check:
     else:
         raise HTTPException(
             status_code=400,
-            detail={"code": "UNKNOWN_OPERATION", "detail": f"Unknown operation: {operation}"},
+            detail={
+                "code": "UNKNOWN_OPERATION",
+                "detail": f"Unknown operation: {operation}",
+            },
         )
+
 
 # -------------------------------------------------------------------
 # MCP Endpoints
 # -------------------------------------------------------------------
+
 
 @app.get("/health")
 async def health():
@@ -174,7 +202,9 @@ async def apply_world_update(request: Request):
     modifications as specified by the apply_world_update JSON Schema.
     """
     payload = await request.json()
-    logger.info(f"apply_world_update — session_id={payload.get('session_id')}, updates={len(payload.get('updates', []))}")
+    logger.info(
+        f"apply_world_update — session_id={payload.get('session_id')}, updates={len(payload.get('updates', []))}"
+    )
 
     validate_payload(payload)
 
@@ -197,7 +227,9 @@ async def apply_world_update(request: Request):
         f.write(f"\n\n---\n\n{payload['log_entry']}")
 
     logger.info(f"apply_world_update — success, {len(results)} operations executed.")
-    return JSONResponse({"success": True, "session_id": payload["session_id"], "results": results})
+    return JSONResponse(
+        {"success": True, "session_id": payload["session_id"], "results": results}
+    )
 
 
 @app.get("/tools/read_state")
@@ -208,12 +240,16 @@ async def read_state(path: str):
     validate_path(path)
     abs_path = REPO_ROOT / path
     if not abs_path.exists():
-        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": f"{path} does not exist."})
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "NOT_FOUND", "detail": f"{path} does not exist."},
+        )
 
     content = abs_path.read_text()
     if path.endswith(".json"):
         return {"path": path, "data": json.loads(content)}
     return {"path": path, "data": content}
+
 
 # -------------------------------------------------------------------
 # Entry Point
@@ -223,7 +259,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sentinel fs-manager MCP Server")
     parser.add_argument("--port", type=int, default=8010)
     parser.add_argument("--host", type=str, default="127.0.0.1")
-    parser.add_argument("--dev", action="store_true", help="Enable development mode (verbose logging)")
+    parser.add_argument(
+        "--dev", action="store_true", help="Enable development mode (verbose logging)"
+    )
     args = parser.parse_args()
 
     if args.dev:
