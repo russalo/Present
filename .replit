@@ -23,7 +23,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/start-cloud.sh"
+args = "just start"
 
 [[workflows.workflow]]
 name = "Health Check"
@@ -31,7 +31,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/health-check.sh"
+args = "just health"
 
 [[workflows.workflow]]
 name = "Project"
@@ -39,7 +39,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm build"
+args = "just build"
 
 [agent]
 stack = "PNPM_WORKSPACE"

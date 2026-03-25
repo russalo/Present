@@ -12,6 +12,8 @@ Welcome, Technician. This guide gets the **Infrastructure Node** running on your
 |------|---------|-----|
 | [Docker](https://docs.docker.com/get-docker/) + Docker Compose | Latest | Runs PostgreSQL and ChromaDB containers |
 | [Python](https://www.python.org/downloads/) | **3.11+** | Runs the MCP servers (strict type hints require 3.11) |
+| [just](https://github.com/casey/just) | 1.x | Cross-OS command runner — `brew install just` · `cargo install just` · `winget install Casey.Just` |
+| [chezmoi](https://www.chezmoi.io/) | 2.x | OS-aware `.env` generation — `brew install chezmoi` · `sh -c "$(curl -fsLS get.chezmoi.io)"` |
 | [Git](https://git-scm.com/) | Any | Clones the repo |
 | [Tailscale](https://tailscale.com/download) | Any | **Optional** — only needed for multi-machine deployments |
 
@@ -31,33 +33,31 @@ cd project-sentinel
 ## Step 2: Configure Your Environment
 
 ```bash
-cp infrastructure/.env.example infrastructure/.env
+just env
 ```
 
-Open `infrastructure/.env` and set a real PostgreSQL password. This is the **only** required change for local development:
+Chezmoi reads `.chezmoi/dot_infrastructure/dot_env.tmpl` and writes
+`infrastructure/.env` with the correct settings for your OS — including a
+commented-out `DOCKER_HOST` line for macOS Docker Desktop and a `PYTHON_BIN`
+hint for Windows. If you want a non-default PostgreSQL password, open
+`infrastructure/.env` and change `POSTGRES_PASSWORD` before continuing.
 
-```bash
-# infrastructure/.env — change this one line:
-POSTGRES_PASSWORD=my_local_dev_password
-```
-
-Everything else defaults to `127.0.0.1` (local-only), which is exactly right during development.
-
-> **Why this is cool:** The `TAILSCALE_BIND_IP` variable means the same `.env` works for both local dev (`127.0.0.1`) and a real multi-node mesh deployment (a Tailscale IP like `100.x.y.z`). Zero config drift between environments.
+> **Why this is cool:** The `TAILSCALE_BIND_IP` variable means the same template
+> works for both local dev (`127.0.0.1`) and a real multi-node mesh deployment
+> (a Tailscale IP like `100.x.y.z`). Zero config drift between environments.
 
 ---
 
 ## Step 3: Boot the Infrastructure Node
 
 ```bash
-cd infrastructure
-docker compose up -d
+just up
 ```
 
 Verify both services are healthy:
 
 ```bash
-docker compose ps
+just ps
 ```
 
 Expected output — both showing **healthy**:
@@ -68,14 +68,19 @@ sentinel-postgres     Up (healthy)
 sentinel-chromadb     Up (healthy)
 ```
 
-If they're still starting up, wait 20 seconds and check again. You can also hit ChromaDB's heartbeat directly:
+If they're still starting up, wait 20 seconds and check again. You can also
+hit ChromaDB's heartbeat directly:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/heartbeat
 # Expected: {"nanosecond heartbeat": <timestamp>}
 ```
 
-> **Why this is cool:** PostgreSQL handles rigid relational state (entity inventories, faction resources, coordinates). ChromaDB is the semantic memory — it lets the Lorekeeper agent search through thousands of Markdown lore entries by *meaning*, not just keywords. When a player mentions "the old lighthouse", the system already knows about it.
+> **Why this is cool:** PostgreSQL handles rigid relational state (entity
+> inventories, faction resources, coordinates). ChromaDB is the semantic memory
+> — it lets the Lorekeeper agent search through thousands of Markdown lore
+> entries by *meaning*, not just keywords. When a player mentions "the old
+> lighthouse", the system already knows about it.
 
 ---
 
@@ -84,12 +89,11 @@ curl http://127.0.0.1:8000/api/v1/heartbeat
 Open a new terminal tab and run:
 
 ```bash
-cd mcp-servers/fs-manager
-pip install -r requirements.txt
-python server.py --port 8010 --dev
+just fs-manager
 ```
 
-The `--dev` flag enables verbose logging so you can see every validation decision in real time.
+This installs the Python deps (if needed) and starts the server with verbose
+`--dev` logging so you can see every validation decision in real time.
 
 Expected output:
 
@@ -105,7 +109,10 @@ curl http://127.0.0.1:8010/health
 # Expected: {"status":"ok","server":"fs-manager","version":"0.1.0"}
 ```
 
-> **Why this is cool:** This server is the entire security boundary between the LLM and your filesystem. The AI *never* gets a shell. It can only call this validated API. Every write is gated by a JSON Schema contract before any file is touched.
+> **Why this is cool:** This server is the entire security boundary between the
+> LLM and your filesystem. The AI *never* gets a shell. It can only call this
+> validated API. Every write is gated by a JSON Schema contract before any file
+> is touched.
 
 ---
 
