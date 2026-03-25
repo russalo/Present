@@ -20,6 +20,9 @@ Completed items should be removed by the end-session workflow, not left to accum
 - [ ] Fix esbuild platform overrides in `pnpm-workspace.yaml` that strip all non-linux-x64 binaries
       _Discovered: 2026-03-25 | Context: inherited from Replit's linux-only server assumption; breaks builds on macOS and Windows_
 
+- [ ] Remove `lib/integrations/integrations-openai-ai-server` and replace with project's own LLM orchestration
+      _Discovered: 2026-03-25 | Context: core DM AI (every player turn, every world update) currently routes through Replit's AI Integrations proxy (gpt-5-mini); proxy disappears with Replit; project already has its own LLM orchestration design — this just needs to be properly wired in_
+
 ---
 
 ## Replit Dependency Audit & Removal
@@ -38,6 +41,12 @@ without an approved plan.
 
 - [ ] Remove `@replit/*` entries from `pnpm-workspace.yaml` catalog, minimumReleaseAgeExclude, and overrides
       _Discovered: 2026-03-25 | Context: tied to Replit package trust model; safe once plugins are removed_
+
+- [ ] Audit `stripe-replit-sync` package — determine if Stripe integration is Replit-platform-specific and plan replacement or removal
+      _Discovered: 2026-03-25 | Context: package appears in minimumReleaseAgeExclude; suggests Stripe payment logic may be tied to Replit's payment integration; needs investigation_
+
+- [ ] Evaluate `artifacts/mockup-sandbox` — Replit scaffolding or intentional artifact?
+      _Discovered: 2026-03-25 | Context: has same Replit vite plugins as rpg-engine but is never referenced anywhere in the project; likely safe to delete but needs confirmation_
 
 - [ ] Audit and update README.md, CONTRIBUTING.md, QUICKSTART.md to remove remaining Replit references
       _Discovered: 2026-03-25 | Context: README credits Replit as a core tool; no longer accurate_
