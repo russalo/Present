@@ -55,11 +55,20 @@ without an approved plan.
 
 ## Architecture & Structure
 
-- [ ] Decide on frontend strategy for 1.0: CLI-only vs. browser frontend
-      _Discovered: 2026-03-25 | Context: rpg-engine frontend was Replit's vision, not a project requirement; a CLI interface may be sufficient for 1.0_
+- [ ] Decide where sentinel-ui lives in the repo — proposed `apps/sentinel-ui/` under pnpm workspace
+      _Discovered: 2026-03-25 | Context: frontend plan written (docs/FRONTEND_PLAN.md); repo placement is the remaining open question before Phase 1 scaffold_
+
+- [ ] Decide whether Django backend exists or if a Node/Express stub is needed for frontend dev
+      _Discovered: 2026-03-25 | Context: frontend API contract is defined; backend language is undecided; stub needed to unblock Phase 2_
+
+- [ ] Define world seed format
+      _Discovered: 2026-03-25 | Context: needed before share modal and TopBar world identity can be built; seed is the shareable unit of a campaign_
+
+- [ ] Clarify DM persona: prompt prefix, model selector, or both
+      _Discovered: 2026-03-25 | Context: persona selector is in the TopBar design; implementation depends on how the LLM orchestration layer exposes it_
 
 - [ ] Restructure artifact directory layout away from Replit conventions
-      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; should reflect project's own organization once frontend strategy is decided_
+      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; should reflect project's own organization once frontend scaffold placement is decided_
 
 ---
 
