@@ -67,7 +67,8 @@ Project Sentinel is built by AI, for AI, and with AI. We actively encourage the 
 - **Encouraged uses:** AI-generated test suites, AI-assisted Markdown lore drafts, AI-generated migration scripts with human review.
 
 ---
-### DCO sign-off (required)
+
+## 4. DCO Sign-off (Required)
 
 Project Sentinel uses the **Developer Certificate of Origin (DCO)** instead of a CLA.
 
@@ -89,7 +90,9 @@ Forgot to sign off? Amend the commit:
 git commit --amend -s
 ```
 
-## 4. The Vibe Coder's Guide
+---
+
+## 5. The Vibe Coder's Guide
 
 **Bring your favorite LLM. We mean it.**
 
@@ -117,48 +120,61 @@ Whether you use Claude Code, Copilot, Gemini, or any other tool — if the code 
 
 ---
 
-## 5. Local Development Sandbox
+## 6. Local Development Sandbox
 
-You do not need a massive server cluster to build for Sentinel. You can spin up a localized version of the Infrastructure Node directly on your machine.
+You do not need a massive server cluster to build for Sentinel. You can spin
+up a localized version of the Infrastructure Node directly on your machine.
 
-### Step 1: Initialize the Backbone (Docker)
+**Additional prerequisites:** [`just`](https://github.com/casey/just) and
+[`chezmoi`](https://www.chezmoi.io/) — see the
+[README prerequisites table](README.md#prerequisites) for install instructions.
+
+### Step 1: Generate your OS-aware environment config
 
 ```bash
-cp infrastructure/.env.example infrastructure/.env
-# Fill in your local credentials (no Tailscale IP needed for local dev)
-
-cd infrastructure
-docker-compose up -d
-
-# Verify
-docker-compose ps
+just env
 ```
 
-### Step 2: Start the MCP Bridge
+Chezmoi reads `.chezmoi/dot_infrastructure/dot_env.tmpl` and writes
+`infrastructure/.env` with the correct values for your OS. Edit the generated
+file if you need a custom PostgreSQL password before continuing.
+
+### Step 2: Start the Infrastructure Backbone (Docker)
 
 ```bash
-# Run the local filesystem manager to test schema validation
-python -m mcp_servers.fs_manager --port 8000 --dev
-
-# Run the vector DB interface against local ChromaDB
-python -m mcp_servers.db_vector --port 8001 --dev
+just up    # start PostgreSQL + ChromaDB in the background
+just ps    # verify both containers show as healthy
 ```
 
-### Step 3: Tailscale Mesh (For Remote Testing)
+### Step 3: Start the MCP Bridge
 
-If you are testing the split-node architecture (e.g., the Inference Node on one machine and the Infrastructure Node on another), ensure both machines are authenticated on your Tailscale network. Set `TAILSCALE_BIND_IP` in your `.env` to the Infrastructure Node's Tailscale IP (`100.x.y.z`). This restricts database traffic exclusively to your secure mesh — both nodes are invisible to the public internet.
-
-### Step 4: Run the Reference Implementation
+Open three terminal tabs — one per server:
 
 ```bash
-# The live web app (React frontend + Express backend)
-pnpm --filter @workspace/rpg-engine run dev
-pnpm --filter @workspace/api-server run dev
+just fs-manager   # :8010 — schema-validated filesystem CRUD
+just db-vector    # :8011 — PostgreSQL + ChromaDB query router
+just git-sync     # :8012 — automated world-state snapshots
+```
+
+### Step 4: Tailscale Mesh (For Remote Testing)
+
+If you are testing the split-node architecture (e.g., the Inference Node on
+one machine and the Infrastructure Node on another), ensure both machines are
+authenticated on your Tailscale network. Set `TAILSCALE_BIND_IP` in your
+`infrastructure/.env` to the Infrastructure Node's Tailscale IP (`100.x.y.z`).
+This restricts database traffic exclusively to your secure mesh — both nodes
+are invisible to the public internet.
+
+### Step 5: Run the Reference Implementation
+
+```bash
+just dev-frontend   # React frontend (rpg-engine artifact)
+just dev-backend    # Express backend (api-server artifact)
 ```
 
 ---
 
-## 6. Coding Standards: The Schema Ironclad
+## 7. Coding Standards: The Schema Ironclad
 
 The golden rule of Project Sentinel: **The AI is never granted raw filesystem access.**
 

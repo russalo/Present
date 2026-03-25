@@ -15,7 +15,31 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
+runButton = "Start Cloud"
+
+[[workflows.workflow]]
+name = "Start Cloud"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "just start"
+
+[[workflows.workflow]]
+name = "Health Check"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "just health"
+
+[[workflows.workflow]]
+name = "Project"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "just build"
 
 [agent]
 stack = "PNPM_WORKSPACE"

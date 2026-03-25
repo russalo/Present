@@ -114,42 +114,54 @@ flowchart TD
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.11+
-- Tailscale (for multi-node deployments)
-- A Tailscale account with both nodes authenticated
+| Tool | Version | Install |
+|------|---------|---------|
+| Docker + Docker Compose | Latest | [docs.docker.com](https://docs.docker.com/get-docker/) |
+| Python | 3.11+ | [python.org](https://www.python.org/downloads/) |
+| Node.js + pnpm | Node 24, pnpm 10 | [nodejs.org](https://nodejs.org/) |
+| just | 1.x | `brew install just` · `cargo install just` · `winget install Casey.Just` |
+| chezmoi | 2.x | `brew install chezmoi` · `sh -c "$(curl -fsLS get.chezmoi.io)"` |
+| Tailscale | Any | **Optional** — only needed for multi-machine deployments |
 
-### 1. Configure Environment
-
-```bash
-cp infrastructure/.env.example infrastructure/.env
-# Edit .env with your credentials and Tailscale IP
-```
-
-### 2. Spin Up the Infrastructure Node
+### 1. Generate your OS-aware environment config
 
 ```bash
-cd infrastructure
-docker-compose up -d
-
-# Verify both services are healthy
-docker-compose ps
+just env
 ```
 
-### 3. Start the MCP Bridge
+Chezmoi reads `.chezmoi/dot_infrastructure/dot_env.tmpl` and writes
+`infrastructure/.env` with the correct Docker socket path and Python binary
+for your OS. Edit the generated file if you need a non-default PostgreSQL
+password before continuing.
+
+### 2. Install all dependencies
 
 ```bash
-# Filesystem manager — handles /data CRUD with schema validation
-python -m mcp_servers.fs_manager --port 8000
-
-# Vector DB interface — routes queries to PostgreSQL and ChromaDB
-python -m mcp_servers.db_vector --port 8001
-
-# Git sync — automated versioning after each world update
-python -m mcp_servers.git_sync --port 8002
+just install
 ```
 
-### 4. Initialize the Inference Loop
+Runs `pnpm install --frozen-lockfile` and `pip install` for all three MCP
+servers in one step.
+
+### 3. Spin up the full cloud stack
+
+```bash
+just start
+```
+
+Starts PostgreSQL and ChromaDB via Docker Compose, polls until both are
+healthy, then launches all three MCP servers in the background.
+
+### 4. Confirm everything is running
+
+```bash
+just health
+```
+
+Prints a pass/fail table for every service and your git remote/branch state.
+Exits 0 if all checks pass.
+
+### Initialize the Inference Loop
 
 ```bash
 cd world-engine
