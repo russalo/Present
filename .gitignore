@@ -53,3 +53,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
+
+# Secrets — never commit environment files
+infrastructure/.env
