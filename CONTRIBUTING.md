@@ -67,7 +67,8 @@ Project Sentinel is built by AI, for AI, and with AI. We actively encourage the 
 - **Encouraged uses:** AI-generated test suites, AI-assisted Markdown lore drafts, AI-generated migration scripts with human review.
 
 ---
-### DCO sign-off (required)
+
+## 4. DCO Sign-off (Required)
 
 Project Sentinel uses the **Developer Certificate of Origin (DCO)** instead of a CLA.
 
@@ -89,7 +90,9 @@ Forgot to sign off? Amend the commit:
 git commit --amend -s
 ```
 
-## 4. The Vibe Coder's Guide
+---
+
+## 5. The Vibe Coder's Guide
 
 **Bring your favorite LLM. We mean it.**
 
@@ -117,7 +120,7 @@ Whether you use Claude Code, Copilot, Gemini, or any other tool — if the code 
 
 ---
 
-## 5. Local Development Sandbox
+## 6. Local Development Sandbox
 
 You do not need a massive server cluster to build for Sentinel. You can spin up a localized version of the Infrastructure Node directly on your machine.
 
@@ -158,7 +161,7 @@ pnpm --filter @workspace/api-server run dev
 
 ---
 
-## 6. Coding Standards: The Schema Ironclad
+## 7. Coding Standards: The Schema Ironclad
 
 The golden rule of Project Sentinel: **The AI is never granted raw filesystem access.**
 
