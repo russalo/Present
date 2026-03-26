@@ -10,7 +10,7 @@ export function useDMStream(sessionId) {
     if (!sessionId || eventSourceRef.current) return;
 
     setIsStreaming(true);
-    eventSourceRef = openDMStream(
+    eventSourceRef.current = openDMStream(
       sessionId,
       (chunk) => appendToBuffer(chunk),
       (data) => {

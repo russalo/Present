@@ -3,7 +3,9 @@ import { create } from 'zustand';
 export const useChatStore = create((set) => ({
   // Message history
   messages: [],
-  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+  addMessage: (message) => set((state) => ({
+    messages: [...state.messages, { id: crypto.randomUUID(), ...message }],
+  })),
   clearMessages: () => set({ messages: [] }),
 
   // Streaming state

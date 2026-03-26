@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePersonaStore } from '../../stores/personaStore';
 
 export function MoodDropdown({ moods = [] }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const { mood, setMood } = usePersonaStore();
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className="relative inline-block">
+    <div ref={ref} className="relative inline-block">
       <button
         onClick={() => setOpen(!open)}
         className="text-dust hover:text-amber transition-colors"

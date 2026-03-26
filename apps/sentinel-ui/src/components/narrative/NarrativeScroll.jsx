@@ -23,25 +23,16 @@ export function NarrativeScroll() {
         </div>
       )}
 
-      {messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className="mb-4 animate-fade-in"
-        >
+      {messages.map((msg) => (
+        <div key={msg.id} className="mb-4 animate-fade-in">
           {msg.type === 'dm' && (
-            <div className="text-ink font-crimson leading-relaxed prose-narrative">
-              {msg.content}
-            </div>
+            <div className="text-ink font-crimson leading-relaxed prose-narrative">{msg.content}</div>
           )}
           {msg.type === 'player' && (
-            <div className="text-amber/80 text-sm italic">
-              &gt; {msg.content}
-            </div>
+            <div className="text-amber/80 text-sm italic">&gt; {msg.content}</div>
           )}
           {msg.type === 'system' && (
-            <div className="text-ether text-xs font-mono">
-              [{msg.content}]
-            </div>
+            <div className="text-ether text-xs font-mono">[{msg.content}]</div>
           )}
         </div>
       ))}

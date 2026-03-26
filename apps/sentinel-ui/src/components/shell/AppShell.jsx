@@ -33,7 +33,7 @@ export function AppShell() {
         timestamp: new Date(),
       });
     }
-  }, []);
+  }, [addMessage, messages.length]);
 
   return (
     <div className="flex flex-col h-screen bg-void">
