@@ -45,6 +45,22 @@ GIT_SYNC_PORT=8012
 INFERENCE_NODE_IP=127.0.0.1
 INFERENCE_NODE_CALLBACK_PORT=9000
 
+# ─── LLM / DM AI ─────────────────────────────────────────────────────────────
+# Point OPENAI_BASE_URL at your LiteLLM instance to route to any provider.
+# Leave OPENAI_BASE_URL unset (or blank) to hit real OpenAI directly.
+#
+# LiteLLM on the same machine:        http://localhost:4000/v1
+# LiteLLM on Fedora via Tailscale:    http://<tailscale-ip>:4000/v1
+# LiteLLM inside Docker (Linux host): http://172.17.0.1:4000/v1
+#
+OPENAI_BASE_URL=http://localhost:4000/v1
+# LiteLLM accepts any non-empty string as the API key unless you configure auth.
+# For real OpenAI, set this to your sk-... key.
+OPENAI_API_KEY=sk-no-key-required-for-litellm
+# Model name exactly as LiteLLM (or OpenAI) expects it.
+# Examples: gpt-4o-mini  |  claude-haiku-4-5-20251001  |  gemini/gemini-1.5-flash
+DM_MODEL=gpt-4o-mini
+
 # ─── Python Binary (OS-specific hint) ────────────────────────────────────────
 # Scripts use python3; on Windows/WSL the binary may be `python`.
 {{ if eq .chezmoi.os "windows" -}}

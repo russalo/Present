@@ -17,9 +17,6 @@ Completed items should be removed by the end-session workflow, not left to accum
 
 ## High Priority — Do Soon
 
-- [ ] Remove `lib/integrations/integrations-openai-ai-server` and replace with project's own LLM orchestration
-      _Discovered: 2026-03-25 | Context: core DM AI (every player turn, every world update) currently routes through Replit's AI Integrations proxy (gpt-5-mini); proxy disappears with Replit; project already has its own LLM orchestration design — this just needs to be properly wired in_
-
 ---
 
 ## Architecture & Structure

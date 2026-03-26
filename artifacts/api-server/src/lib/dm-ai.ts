@@ -1,4 +1,9 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  ...(process.env.OPENAI_BASE_URL && { baseURL: process.env.OPENAI_BASE_URL }),
+});
+const DM_MODEL = process.env.DM_MODEL ?? "gpt-4o-mini";
 
 const DM_SYSTEM_PROMPT = `You are the Dungeon Master (DM) of a persistent, living RPG world. Your role is to:
 
@@ -188,7 +193,7 @@ ${worldContext.recentTurns.slice(-3).map((t, i) => `Player: ${t.playerAction}\nD
 `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5-mini",
+    model: DM_MODEL,
     messages: [
       { role: "system", content: DM_SYSTEM_PROMPT },
       { role: "user", content: contextBlock + "\n\nPLAYER ACTION: " + playerAction },
@@ -212,7 +217,7 @@ export async function generateWorldIntro(
   const seedContext = worldSeed ? `World seed/theme: ${worldSeed}` : "Create a classic dark fantasy setting with mystery and danger.";
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5-mini",
+    model: DM_MODEL,
     messages: [
       { role: "system", content: DM_SYSTEM_PROMPT },
       {
