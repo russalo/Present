@@ -1,8 +1,15 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  ...(process.env.OPENAI_BASE_URL && { baseURL: process.env.OPENAI_BASE_URL }),
-});
+let _openai: OpenAI | null = null;
+function getOpenAIClient(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      ...(process.env.OPENAI_BASE_URL && { baseURL: process.env.OPENAI_BASE_URL }),
+    });
+  }
+  return _openai;
+}
 const DM_MODEL = process.env.DM_MODEL ?? "gpt-4o-mini";
 
 const DM_SYSTEM_PROMPT = `You are the Dungeon Master (DM) of a persistent, living RPG world. Your role is to:
@@ -192,7 +199,7 @@ RECENT TURNS:
 ${worldContext.recentTurns.slice(-3).map((t, i) => `Player: ${t.playerAction}\nDM: ${t.narrative}`).join("\n\n") || "This is the beginning of the session."}
 `;
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAIClient().chat.completions.create({
     model: DM_MODEL,
     messages: [
       { role: "system", content: DM_SYSTEM_PROMPT },
@@ -216,7 +223,7 @@ export async function generateWorldIntro(
 ): Promise<DmResponse> {
   const seedContext = worldSeed ? `World seed/theme: ${worldSeed}` : "Create a classic dark fantasy setting with mystery and danger.";
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAIClient().chat.completions.create({
     model: DM_MODEL,
     messages: [
       { role: "system", content: DM_SYSTEM_PROMPT },
