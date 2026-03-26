@@ -55,8 +55,8 @@ without an approved plan.
 
 ## Architecture & Structure
 
-- [ ] Restructure artifact directory layout away from Replit conventions — Phase 0 task (delete `artifacts/rpg-engine/` and `artifacts/mockup-sandbox/`, scaffold `apps/sentinel-ui/`)
-      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; will be resolved during frontend Phase 0_
+- [ ] Connect `apps/sentinel-ui/` to real backend API (Django or api-server) — replace mock seed generation and stub SSE with live endpoints
+      _Discovered: 2026-03-26 | Context: all frontend phases complete; UI is wired to mock data; next step is real API integration_
 
 ---
 
