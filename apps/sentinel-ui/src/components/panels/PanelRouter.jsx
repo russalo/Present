@@ -1,14 +1,21 @@
 import { useUIStore } from '../../stores/uiStore';
+import { CodexPanel } from './CodexPanel';
+import { InventoryPanel } from './InventoryPanel';
+import { QuestLogPanel } from './QuestLogPanel';
+import { MapPanel } from './MapPanel';
 
 export function PanelRouter() {
   const { activeTab, setActiveTab } = useUIStore();
 
   const tabs = [
-    { id: 'codex', label: 'Codex' },
-    { id: 'inventory', label: 'Inv' },
-    { id: 'quests', label: 'Quests' },
-    { id: 'map', label: 'Map' },
+    { id: 'codex', label: 'Codex', component: CodexPanel },
+    { id: 'inventory', label: 'Inv', component: InventoryPanel },
+    { id: 'quests', label: 'Quests', component: QuestLogPanel },
+    { id: 'map', label: 'Map', component: MapPanel },
   ];
+
+  const activeTabConfig = tabs.find(t => t.id === activeTab);
+  const ActiveComponent = activeTabConfig?.component;
 
   return (
     <div className="flex flex-col h-full">
@@ -30,11 +37,8 @@ export function PanelRouter() {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-4 text-sm text-dust">
-        {activeTab === 'codex' && <div>Codex content coming soon...</div>}
-        {activeTab === 'inventory' && <div>Inventory empty.</div>}
-        {activeTab === 'quests' && <div>No active quests.</div>}
-        {activeTab === 'map' && <div>Map not yet explored.</div>}
+      <div className="flex-1 overflow-y-auto">
+        {ActiveComponent && <ActiveComponent />}
       </div>
     </div>
   );
