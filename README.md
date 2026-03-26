@@ -183,7 +183,10 @@ python orchestrator/main.py
 
 ## Live Demo
 
-A fully functional reference implementation of Project Sentinel (React frontend + Express backend + PostgreSQL) is available at the repository root. See the `artifacts/` directory.
+A reference implementation of Project Sentinel is available in this repository:
+
+- **Frontend** — `apps/sentinel-ui/` (`@sentinel/ui`) — React 19 + Vite + Tailwind v4, diegetic design system, World Creation flow, DM Persona system
+- **Backend** — `artifacts/api-server/` — Express 5 + PostgreSQL + Drizzle ORM; currently wired to stub SSE and mock seed endpoints (real API integration tracked in `docs/BACKLOG.md`)
 
 ---
 
@@ -196,7 +199,7 @@ Project Sentinel v0.1 was vibe-coded and architected through a coalition of AI t
 | **Google Gemini** (AI Studio) | System architecture, schema design, and the Sentinel Porter / Airlock specification |
 | **Anthropic Claude** | CONTRIBUTING guidelines, security policy, and MCP server hardening |
 | **OpenAI** | DM persona prompts, Fact-Extractor agent definitions, and the `gpt-5-mini` reference implementation |
-| **Replit** | Full-stack scaffolding, live development environment, and the React + Express artifact |
+| **Replit** | Original full-stack scaffolding and live development environment (migrated away; see `docs/BACKLOG.md`) |
 | **GitHub Copilot** | Inline completions, test generation, and TypeScript library boilerplate |
 
 In 2026, the best open-source projects are human-directed and AI-synthesized. Sentinel is proof of concept. The humans set the vision, held the architecture accountable, and enforced the schema contracts. The AI did the heavy lifting.

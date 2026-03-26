@@ -210,7 +210,7 @@ Expected response (HTTP 422):
 |---|---|
 | Understand the full three-node architecture | [`ARCHITECTURE.md`](../ARCHITECTURE.md) |
 | Add lore, schemas, or MCP tools | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
-| Run the React + Express frontend demo | [`artifacts/rpg-engine/`](../artifacts/rpg-engine/) |
+| Run the React frontend | [`apps/sentinel-ui/`](../apps/sentinel-ui/) — `just dev-frontend` |
 | Start the db-vector or git-sync MCP servers | `mcp-servers/db-vector/` and `mcp-servers/git-sync/` |
 | See the full project roadmap | [`ROADMAP.md`](../ROADMAP.md) |
 | Export a world state as a `.spak` package | `ARCHITECTURE.md` → Sentinel Porter section |
