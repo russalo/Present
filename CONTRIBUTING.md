@@ -168,7 +168,7 @@ are invisible to the public internet.
 ### Step 5: Run the Reference Implementation
 
 ```bash
-just dev-frontend   # React frontend (rpg-engine artifact)
+just dev-frontend   # React frontend (@sentinel/ui in apps/sentinel-ui/)
 just dev-backend    # Express backend (api-server artifact)
 ```
 
