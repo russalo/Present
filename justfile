@@ -88,13 +88,17 @@ typecheck:
 
 # ─── Local Dev (Reference Artifacts) ─────────────────────────────────────────
 
-# Start the React frontend dev server (rpg-engine artifact)
+# Start the Sentinel UI frontend dev server (apps/sentinel-ui)
 dev-frontend:
-    pnpm --filter @workspace/rpg-engine run dev
+    pnpm --filter @sentinel/ui run dev
 
 # Start the Express backend dev server (api-server artifact)
 dev-backend:
     pnpm --filter @workspace/api-server run dev
+
+# Start both frontend and backend (requires background process management)
+dev:
+    just dev-backend & just dev-frontend
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
 
