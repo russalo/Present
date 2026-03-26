@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useUIStore } from '../../stores/uiStore';
+import { useChatStore } from '../../stores/chatStore';
 import { TopBar } from './TopBar';
 import { CommandBar } from './CommandBar';
 import { WorldStateDashboard } from '../world-state/WorldStateDashboard';
@@ -8,6 +9,7 @@ import { PanelRouter } from '../panels/PanelRouter';
 
 export function AppShell() {
   const { focusMode, toggleFocusMode, leftPanelCollapsed, rightPanelCollapsed } = useUIStore();
+  const { messages, addMessage } = useChatStore();
 
   // Focus mode keyboard shortcut (F key)
   useEffect(() => {
@@ -20,6 +22,18 @@ export function AppShell() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleFocusMode]);
+
+  // Add welcome message on mount
+  useEffect(() => {
+    if (messages.length === 0) {
+      addMessage({
+        type: 'dm',
+        content: 'Welcome, traveler. The world awaits your next move.',
+        author: 'Oracle',
+        timestamp: new Date(),
+      });
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-void">
@@ -46,7 +60,7 @@ export function AppShell() {
         )}
       </div>
 
-      <CommandBar />
+      <CommandBar onSubmit={(input) => console.log('Action:', input)} />
     </div>
   );
 }

@@ -1,12 +1,21 @@
 import { Send, Dices } from 'lucide-react';
 import { useState } from 'react';
+import { useChatStore } from '../../stores/chatStore';
 
-export function CommandBar({ onSubmit = () => {} }) {
+export function CommandBar() {
   const [input, setInput] = useState('');
+  const { addMessage, isStreaming } = useChatStore();
 
   const handleSubmit = () => {
-    if (input.trim()) {
-      onSubmit(input);
+    if (input.trim() && !isStreaming) {
+      // Add player message
+      addMessage({
+        type: 'player',
+        content: input,
+        timestamp: new Date(),
+      });
+
+      // TODO: Send to backend and trigger DM stream
       setInput('');
     }
   };
@@ -27,11 +36,13 @@ export function CommandBar({ onSubmit = () => {} }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="What do you do?"
-          className="flex-1 bg-void border border-border rounded px-3 py-2 text-ink placeholder-dust focus:outline-none focus:border-amber transition-colors"
+          disabled={isStreaming}
+          className="flex-1 bg-void border border-border rounded px-3 py-2 text-ink placeholder-dust focus:outline-none focus:border-amber transition-colors disabled:opacity-50"
         />
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-amber text-void rounded hover:bg-amber/90 transition-colors flex items-center gap-2"
+          disabled={isStreaming}
+          className="px-4 py-2 bg-amber text-void rounded hover:bg-amber/90 transition-colors flex items-center gap-2 disabled:opacity-50"
         >
           <Send size={16} />
         </button>

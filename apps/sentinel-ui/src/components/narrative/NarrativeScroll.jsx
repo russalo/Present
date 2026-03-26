@@ -1,10 +1,19 @@
+import { useEffect, useRef } from 'react';
 import { useChatStore } from '../../stores/chatStore';
 
 export function NarrativeScroll() {
   const { messages, streamBuffer } = useChatStore();
+  const scrollRef = useRef(null);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, streamBuffer]);
 
   return (
-    <div className="flex flex-col p-6 gap-4 overflow-y-auto">
+    <div ref={scrollRef} className="flex flex-col p-6 gap-4 overflow-y-auto">
       {messages.length === 0 && (
         <div className="flex items-center justify-center h-full text-center text-dust">
           <div>
