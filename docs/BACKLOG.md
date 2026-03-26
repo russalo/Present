@@ -71,6 +71,9 @@ without an approved plan.
 - [ ] Add targeted tests: just recipe smoke tests, backlog script manipulation tests, script executability checks
       _Discovered: 2026-03-25 | Context: assessed as valuable at current stage; not yet implemented_
 
+- [ ] Add unit and integration tests for `apps/sentinel-ui/` — Zustand stores, API client, and key components
+      _Discovered: 2026-03-26 | Context: flagged in PR #5 review; no tests exist for any of the 8 frontend phases; recommend vitest + @testing-library/react_
+
 - [ ] Add machine-readable requirements manifest (Brewfile or .tool-versions) for `just`, `chezmoi`, and other non-npm tools
       _Discovered: 2026-03-25 | Context: docs list prerequisites but no single install command exists for a new contributor_
 
