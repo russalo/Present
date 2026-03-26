@@ -3,6 +3,7 @@ import { usePersonaStore } from '../../stores/personaStore';
 import { Menu, Share2 } from 'lucide-react';
 import { PersonaSheet } from '../persona/PersonaSheet';
 import { SeedShareModal } from '../seed/SeedShareModal';
+import { StatusIndicator } from './StatusIndicator';
 
 export function TopBar({ worldName = 'The Shattered Expanse', seedString = 'ABC-DEF-GHI-JKL' }) {
   const { personaName, mood, isLocked } = usePersonaStore();
@@ -18,6 +19,9 @@ export function TopBar({ worldName = 'The Shattered Expanse', seedString = 'ABC-
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Connection status */}
+          <StatusIndicator />
+
           {/* Seed string */}
           <button
             onClick={() => setSeedModalOpen(true)}
