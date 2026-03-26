@@ -55,11 +55,8 @@ without an approved plan.
 
 ## Architecture & Structure
 
-- [ ] Decide on frontend strategy for 1.0: CLI-only vs. browser frontend
-      _Discovered: 2026-03-25 | Context: rpg-engine frontend was Replit's vision, not a project requirement; a CLI interface may be sufficient for 1.0_
-
-- [ ] Restructure artifact directory layout away from Replit conventions
-      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; should reflect project's own organization once frontend strategy is decided_
+- [ ] Connect `apps/sentinel-ui/` to real backend API (Django or api-server) — replace mock seed generation and stub SSE with live endpoints
+      _Discovered: 2026-03-26 | Context: all frontend phases complete; UI is wired to mock data; next step is real API integration_
 
 ---
 
@@ -73,6 +70,9 @@ without an approved plan.
 
 - [ ] Add targeted tests: just recipe smoke tests, backlog script manipulation tests, script executability checks
       _Discovered: 2026-03-25 | Context: assessed as valuable at current stage; not yet implemented_
+
+- [ ] Add unit and integration tests for `apps/sentinel-ui/` — Zustand stores, API client, and key components
+      _Discovered: 2026-03-26 | Context: flagged in PR #5 review; no tests exist for any of the 8 frontend phases; recommend vitest + @testing-library/react_
 
 - [ ] Add machine-readable requirements manifest (Brewfile or .tool-versions) for `just`, `chezmoi`, and other non-npm tools
       _Discovered: 2026-03-25 | Context: docs list prerequisites but no single install command exists for a new contributor_

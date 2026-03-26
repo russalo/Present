@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-void text-ink font-sans m-0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+#root {
+  @apply min-h-screen flex flex-col;
+}
+
+::selection {
+  @apply bg-amber/30 text-amber;
+}
+
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-void;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-amber/40 hover:bg-amber/60 rounded-full;
+}
+
+/* Prose styling for narrative text */
+.prose-narrative {
+  @apply font-crimson leading-relaxed;
+}
+
+/* Card base styling */
+.card {
+  @apply bg-codex border border-border rounded-lg p-4;
+}
+
+/* Button base */
+.btn {
+  @apply px-4 py-2 rounded font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply btn bg-amber text-void hover:bg-amber/90;
+}
+
+.btn-secondary {
+  @apply btn bg-border text-ink hover:bg-border/80;
+}
+
+.btn-ghost {
+  @apply btn bg-transparent text-ink hover:bg-border/20;
+}
+
+/* Badge styling */
+.badge {
+  @apply inline-block px-2 py-1 rounded text-xs font-medium;
+}
+
+.badge-primary {
+  @apply badge bg-amber/20 text-amber;
+}
+
+.badge-success {
+  @apply badge bg-leyline/20 text-leyline;
+}
+
+.badge-danger {
+  @apply badge bg-blood/20 text-blood;
+}
+
+.badge-info {
+  @apply badge bg-ether/20 text-ether;
+}
+
+/* Typewriter cursor animation */
+@keyframes blink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+.cursor {
+  @apply inline-block w-2 h-4 bg-amber ml-0.5 animate-[blink_1s_step-end_infinite];
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    @apply !animate-none !transition-none;
+  }
+}
