@@ -403,9 +403,215 @@ from the core: a text-first, immersive, schema-driven single-player experience.
 
 ---
 
-## 11. Open Questions (to resolve before Phase 1 kickoff)
+## 11. Resolved: World Creation Flow
 
-- [ ] Where does the frontend live in the repo? Proposed: `apps/sentinel-ui/` under a pnpm workspace
-- [ ] Does the Django backend exist yet, or do we need a Node/Express stub for frontend development?
-- [ ] What is the world seed format? Needs to be defined before the share modal and TopBar world identity can be finalized
-- [ ] DM persona: is this a prompt prefix, a model selector, or both?
+The pre-game screen appears before GameShell. Full user flow:
+
+1. App boots → no active session → route to `/create`
+2. Single dense form (not sequential steps): Genre → Tone → Starting Region → DM Persona (genre-filtered) → Mood → World Modifiers
+3. After each selection, debounced 300ms → `POST /api/v1/world/seed/preview` → LiveSeedPreview panel updates in real-time
+4. Seed string gets 150ms shimmer animation on each update
+5. "Begin Journey" button enabled when: world name + genre + persona chosen
+6. On click → `POST /api/v1/world/create` (locks seed) → navigate to `/` (GameShell)
+
+**LiveSeedPreview component** shows:
+- Public seed fields: world name, genre, tone, region, DM persona + mood, world modifiers, abbreviated seed string
+- "Hidden fields sealed at creation" notice (RNG/entropy, fog entities, NPC secrets, hidden lore)
+
+**PersonaSelector rules:**
+- Compatible personas (genre matches) → selectable
+- Incompatible → greyed with tooltip: "Requires [Genre] world"
+- No genre yet → all greyed
+
+**MoodSelector:**
+- Pill-button group (not dropdown) — all 6 options visible
+- Appears below persona selector once persona chosen
+
+---
+
+## 12. Resolved: DM Persona System (Two-Layer)
+
+**Layer A: Persona Type** (genre-locked)
+- Locked after world creation (default worlds)
+- Unlocked: sandbox mode OR world event fires `persona.shift` event
+- Cannot change during play unless unlocked
+
+**Layer B: Mood** (always changeable)
+- Neutral, gritty, humorous, ominous, fast-paced, lore-heavy (subset per persona)
+- Can change inline during play
+- Mood quick-change via TopBar dropdown (optimistic update, POST in background)
+
+**TopBar persona zone:**
+- Locked: `[Oracle • Ominous 🔒]` → click opens Radix Sheet with persona info + mood selector
+- Unlocked: `[Oracle • Ominous ▾]` → same Sheet but persona type also selectable
+- Mood dropdown: clicking just the mood word opens 6-item inline dropdown
+
+**SSE `persona.shift` event:**
+- Backend fires when world event unlocks persona switching
+- `useDMStream` calls `personaStore.unlock()`
+- SystemMessage: "The Veil shifts. A new voice emerges."
+
+---
+
+## 13. Resolved: World Seed Format & UI Surfaces
+
+**Seed structure:**
+- Public fields: world name, genre, tone, starting region, DM persona + mood, world modifiers, core truths (partial), lore hooks (partial), schema flags
+- Hidden fields: RNG/entropy, fog entities, NPC secrets, hidden lore hooks
+- Abbreviated seed string: `ELD-GR-ORC-BRE-7f2a` (shareable, easy to type)
+
+**When seed is generated:**
+- At the moment player presses "Begin Journey" in WorldCreation
+- Seed becomes LOCKED and immutable
+- After lock: only world state evolves, not the seed
+
+**Seed in GameShell UI:**
+- TopBar: abbreviated seed string `[ELD-GR-7f2a 🔗]` below world name
+- Click 🔗 opens Radix Dialog (Seed Share Modal)
+- Modal shows: all public fields + sealed section listing hidden categories
+- Footer: "Copy Seed String" + "Copy Full Seed JSON" buttons
+
+---
+
+## 14. Resolved: Repo Structure & Backend
+
+**Repo location:** `apps/sentinel-ui/` (confirmed)
+- Package name: `@sentinel/ui` (easy to rename when codename resolves)
+- pnpm workspace: add `apps/*` to packages list
+
+**Backend for frontend dev:**
+- Django backend is provisioned and ready for connection
+- Express `artifacts/api-server/` serves as dev stub (already has `/world`, `/session`, `/entities`, `/health`)
+- Frontend is backend-agnostic via REST/SSE API contract
+- Missing stub endpoints added to api-server as needed during Phase development
+
+---
+
+## 15. Updated: Implementation Phases (8 total, was 6)
+
+### Phase 0 — Replit Removal + Workspace Setup
+- Delete `artifacts/rpg-engine/` and `artifacts/mockup-sandbox/` (Replit scaffolding)
+- Create `apps/` directory; scaffold `apps/sentinel-ui/` with Vite + React 18 + TypeScript
+- Install: Tailwind v4, shadcn/ui (Radix primitives), Zustand, Wouter, Framer Motion, Lucide React
+- Configure vite.config.ts (no Replit, default port 5173, `@` alias)
+- Update `pnpm-workspace.yaml`: add `apps/*`; remove `@replit/*` catalog entries
+- Update `justfile`: `dev-frontend` → `@sentinel/ui`
+- Exit: `just dev-frontend` starts clean blank app without Replit
+
+### Phase 1 — Design System + Shell
+- `index.css`: full palette (void, parchment, codex, border, ink, dust, amber, leyline, blood, ether, cursor)
+- Typography: Crimson Pro (narrative), Inter (UI), JetBrains Mono (code), Cinzel (display)
+- Motion tokens: `pulse-slow`, `fade-in`, `slide-up`
+- Grain texture overlay at 4% opacity
+- `AppShell.tsx`: 3-column layout (280px / flex / 320px), collapse state
+- `TopBar.tsx`, `CommandBar.tsx`, `StatusIndicator.tsx`
+- `uiStore.ts`: panel collapse, focus mode (F shortcut)
+- Responsive: 768px (left → icon rail), <768px (drawer overlays)
+- Exit: shell renders with static panels
+
+### Phase 2 — Chat + DM Stream
+- `chatStore.ts`, `useDMStream.ts`, `stream.ts`
+- `NarrativeScroll.tsx`, `DMMessage.tsx` (typewriter cursor), `PlayerMessage.tsx`, `SystemMessage.tsx`
+- CommandBar → chatStore → NarrativeScroll
+- Add SSE stub to `artifacts/api-server/src/routes/stream.ts`
+- Exit: mock DM stream streams character by character
+
+### Phase 3 — World Creation Flow
+- `WorldCreation.tsx` page (full-screen, replaces StartScreen)
+- `GenreSelector.tsx`, `MoodSelector.tsx`, `PersonaSelector.tsx`, `WorldModifiers.tsx`
+- `LiveSeedPreview.tsx` with shimmer on seed update
+- Add stubs: `GET /api/v1/dm/personas`, `POST /api/v1/world/seed/preview`, `POST /api/v1/world/create`
+- Route `/create`; redirect to `/create` when no session
+- Exit: creation form works; "Begin" navigates to GameShell
+
+### Phase 4 — World State Left Panel
+- `worldStore.ts`, `useWorldSync.ts`
+- `WorldStateDashboard.tsx`, `LocationList.tsx`, `CharacterList.tsx`, `FactionList.tsx`, `WorldMetrics.tsx`
+- Discovery animation: slide-in (200ms) for new, pulse (150ms) for updates
+- Exit: left panel populates from mock response
+
+### Phase 5 — DM Persona System + Seed
+- `personaStore.ts`
+- `PersonaSheet.tsx` (locked vs. unlocked), `MoodDropdown.tsx` (inline mood quick-change)
+- `SeedShareModal.tsx` (Dialog with public fields + sealed section)
+- TopBar: persona zone + seed string + Share2 icon
+- Add `POST /api/v1/dm/persona/mood` stub
+- SSE `persona.shift` event handling in `useDMStream`
+- Exit: mood changes work; persona Sheet opens; share modal displays seed
+
+### Phase 6 — Schema-Driven Right Panel
+- `SchemaRegistry.ts` (maps types from `@workspace/api-zod`)
+- `SchemaRenderer.tsx`, `EntityCard.tsx`, `PropertyList.tsx`
+- `PanelRouter.tsx`, `CodexPanel.tsx`, `InventoryPanel.tsx`, `QuestLogPanel.tsx`
+- `playerStore.ts`
+- Exit: right panel tabs work; unknown types gracefully fallback to PropertyList
+
+### Phase 7 — Map Panel
+- `MapPanel.tsx`: ASCII/SVG map, fog-of-war, tooltips, player position
+- Exit: mock map renders discovered vs. unknown cells
+
+### Phase 8 — Polish
+- `prefers-reduced-motion` pass
+- Mobile drawer panels
+- SSE reconnect with exponential backoff
+- FOUT prevention for custom fonts
+- StatusIndicator SSE health
+
+---
+
+## 16. New Stores (5 total, was 4)
+
+```
+worldStore.ts     — locations, NPCs, factions, time, metrics
+chatStore.ts      — messages[], isStreaming, streamBuffer
+playerStore.ts    — character, inventory, quests
+uiStore.ts        — panel collapse, active tab, focus mode
+personaStore.ts   — personaId, personaName, mood, isLocked, isSandbox
+```
+
+---
+
+## 17. Updated API Contract
+
+**Additions to original contract:**
+
+```
+GET    /api/v1/dm/personas              → DmPersona[] { id, name, compatibleGenres[], moods[] }
+POST   /api/v1/dm/persona              → Set persona type (when unlocked)
+POST   /api/v1/dm/persona/mood         → Set mood (always allowed)
+
+POST   /api/v1/world/seed/preview      → { genre, tone, region, personaId, mood, modifiers }
+                                         Returns: { publicFields, abbreviatedSeedString }
+
+POST   /api/v1/world/create            → Lock seed, create session
+                                         Returns: { sessionId, lockedSeed, worldState }
+
+GET    /api/v1/world/seed              → Return locked seed (public fields only)
+```
+
+**Missing stubs to add to `artifacts/api-server/`:**
+- `src/routes/personas.ts` — hardcoded personas
+- `src/routes/seed.ts` — preview + create stubs
+- `src/routes/stream.ts` — SSE stub
+
+---
+
+## 18. What We Are Explicitly Not Building Yet
+
+(Unchanged from original)
+
+- Multiplayer or session sharing
+- Full canvas maps
+- Audio or ambient sound
+- Authentication / user accounts
+- Leaderboards, achievements, social features
+- Mobile-native app
+
+---
+
+## 19. All Open Questions Resolved ✓
+
+1. **Repo location:** `apps/sentinel-ui/` with package name `@sentinel/ui`
+2. **Backend:** Django provisioned; Express api-server is dev stub
+3. **World seed:** Structured, live-generated during creation, locked on "Begin"
+4. **DM persona:** Two-layer system (Type + Mood); Type is genre-locked, Mood always changeable

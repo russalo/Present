@@ -55,20 +55,8 @@ without an approved plan.
 
 ## Architecture & Structure
 
-- [ ] Decide where sentinel-ui lives in the repo — proposed `apps/sentinel-ui/` under pnpm workspace
-      _Discovered: 2026-03-25 | Context: frontend plan written (docs/FRONTEND_PLAN.md); repo placement is the remaining open question before Phase 1 scaffold_
-
-- [ ] Decide whether Django backend exists or if a Node/Express stub is needed for frontend dev
-      _Discovered: 2026-03-25 | Context: frontend API contract is defined; backend language is undecided; stub needed to unblock Phase 2_
-
-- [ ] Define world seed format
-      _Discovered: 2026-03-25 | Context: needed before share modal and TopBar world identity can be built; seed is the shareable unit of a campaign_
-
-- [ ] Clarify DM persona: prompt prefix, model selector, or both
-      _Discovered: 2026-03-25 | Context: persona selector is in the TopBar design; implementation depends on how the LLM orchestration layer exposes it_
-
-- [ ] Restructure artifact directory layout away from Replit conventions
-      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; should reflect project's own organization once frontend scaffold placement is decided_
+- [ ] Restructure artifact directory layout away from Replit conventions — Phase 0 task (delete `artifacts/rpg-engine/` and `artifacts/mockup-sandbox/`, scaffold `apps/sentinel-ui/`)
+      _Discovered: 2026-03-25 | Context: `artifacts/`, `lib/` hierarchy and `@workspace/` filter names follow Replit monorepo patterns; will be resolved during frontend Phase 0_
 
 ---
 
