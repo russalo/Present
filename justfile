@@ -92,13 +92,25 @@ typecheck:
 dev-frontend:
     pnpm --filter @sentinel/ui run dev
 
-# Start the Express backend dev server (api-server artifact)
+# Start the Express backend dev server (api-server artifact — dev reference only)
 dev-backend:
     pnpm --filter @workspace/api-server run dev
 
-# Start both frontend and backend (requires background process management)
+# Start the Django backend on :8001 (production backend)
+dev-django:
+    cd backend && python manage.py runserver 8001
+
+# Apply Django database migrations (no-op when models are managed=False)
+migrate:
+    cd backend && python manage.py migrate
+
+# Install Django backend dependencies
+install-django:
+    pip install -r backend/requirements.txt
+
+# Start both frontend and Django backend
 dev:
-    just dev-backend & just dev-frontend
+    just dev-django & just dev-frontend
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
 

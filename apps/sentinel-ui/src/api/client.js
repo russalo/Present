@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
 
 export const apiClient = {
   async get(endpoint) {
@@ -18,25 +18,4 @@ export const apiClient = {
   },
 };
 
-export function openDMStream(sessionId, onChunk, onEnd) {
-  const eventSource = new EventSource(
-    `${API_BASE}/stream/narrative?session_id=${sessionId}`
-  );
-
-  eventSource.addEventListener('narrative.chunk', (event) => {
-    const data = JSON.parse(event.data);
-    onChunk(data.text);
-  });
-
-  eventSource.addEventListener('narrative.end', (event) => {
-    const data = JSON.parse(event.data);
-    onEnd(data);
-    eventSource.close();
-  });
-
-  eventSource.addEventListener('error', () => {
-    eventSource.close();
-  });
-
-  return eventSource;
-}
+export { API_BASE };

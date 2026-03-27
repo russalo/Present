@@ -1,6 +1,9 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'wouter';
+import { apiClient } from '../api/client';
 import { useWorldCreationStore } from '../stores/worldCreationStore';
+import { usePlayerStore } from '../stores/playerStore';
+import { useChatStore } from '../stores/chatStore';
 import { GenreSelector } from '../components/world-creation/GenreSelector';
 import { ToneSelector } from '../components/world-creation/ToneSelector';
 import { RegionSelector } from '../components/world-creation/RegionSelector';
@@ -56,7 +59,11 @@ async function generateSeedPreview(formData) {
 export default function WorldCreation() {
   const navigate = useNavigate();
   const creation = useWorldCreationStore();
+  const { setSessionId, setCharacter } = usePlayerStore();
+  const { addMessage, clearMessages } = useChatStore();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState(null);
 
   // Generate seed preview on form changes
   const updatePreview = useCallback(async () => {
@@ -76,13 +83,37 @@ export default function WorldCreation() {
   const canBegin = creation.worldName && creation.genre && creation.personaId;
 
   const handleBegin = async () => {
-    if (!canBegin) return;
+    if (!canBegin || isStarting) return;
+    setIsStarting(true);
+    setStartError(null);
+    try {
+      const data = await apiClient.post('/session/new', {
+        worldName: creation.worldName,
+        playerCharacterName: creation.characterName || 'Traveler',
+        playerCharacterClass: creation.characterClass || 'Adventurer',
+      });
 
-    // TODO: POST to /api/v1/world/create, get sessionId, hydrate stores
-    console.log('Creating world:', creation);
+      setSessionId(data.sessionId);
+      setCharacter(creation.characterName || 'Traveler', creation.characterClass || 'Adventurer');
 
-    // For now, just navigate to game
-    navigate('/');
+      // Seed the chat with the opening DM narrative
+      clearMessages();
+      if (data.turns?.length > 0) {
+        const opening = data.turns[0];
+        addMessage({
+          type: 'dm',
+          content: opening.narrative,
+          author: 'DM',
+          timestamp: new Date(),
+        });
+      }
+
+      creation.reset();
+      navigate('/');
+    } catch (err) {
+      setStartError(err.message);
+      setIsStarting(false);
+    }
   };
 
   return (
@@ -175,12 +206,15 @@ export default function WorldCreation() {
           />
 
           {/* Begin Button */}
+          {startError && (
+            <p className="text-red-400 text-sm">{startError}</p>
+          )}
           <button
             onClick={handleBegin}
-            disabled={!canBegin}
+            disabled={!canBegin || isStarting}
             className="w-full py-3 bg-amber text-void rounded font-medium hover:bg-amber/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-8"
           >
-            ✦ BEGIN JOURNEY
+            {isStarting ? 'Forging your world...' : '✦ BEGIN JOURNEY'}
           </button>
         </div>
 
