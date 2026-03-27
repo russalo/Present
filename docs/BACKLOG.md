@@ -21,8 +21,11 @@ Completed items should be removed by the end-session workflow, not left to accum
 
 ## Architecture & Structure
 
-- [ ] Connect `apps/sentinel-ui/` to real backend API (Django or api-server) — replace mock seed generation and stub SSE with live endpoints
-      _Discovered: 2026-03-26 | Context: all frontend phases complete; UI is wired to mock data; next step is real API integration_
+- [ ] **Auth strategy decision (future):** three clear paths — (1) simple API key middleware for single-player public deployment, (2) DRF TokenAuthentication + Django User model for multi-user, (3) outsourced JWT (Auth0/Clerk/Supabase) if password management is unwanted. SSE streaming endpoint has no conflict with any of these — auth middleware runs before the stream opens. Decision not needed for 1.0.
+      _Discovered: 2026-03-27 | Context: discussed during Django backend planning; single-player for 1.0 means no auth required now_
+
+- [ ] **DRF adoption decision (future):** not needed for 1.0. Worthwhile if: (a) multi-user auth is added, (b) entity CRUD grows beyond list/read, (c) `_serialize_*` helpers in views.py become a maintenance burden. SSE endpoint will always be raw Django regardless of DRF adoption.
+      _Discovered: 2026-03-27 | Context: discussed during Django backend planning_
 
 ---
 
