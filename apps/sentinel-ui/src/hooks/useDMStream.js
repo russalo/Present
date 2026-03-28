@@ -25,6 +25,7 @@ export function useDMStream() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let receivedDone = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -39,7 +40,8 @@ export function useDMStream() {
             const raw = line.slice(6).trim();
             if (raw === '[DONE]') {
               commitStreamMessage();
-              return;
+              receivedDone = true;
+              break;
             }
             let event;
             try {
@@ -52,11 +54,14 @@ export function useDMStream() {
             if (event.type === 'system') addMessage({ type: 'system', content: event.content, timestamp: new Date() });
             if (event.type === 'error') addMessage({ type: 'system', content: `[Error: ${event.content}]`, timestamp: new Date() });
           }
+          if (receivedDone) break;
         }
         // Stream ended without [DONE] — commit what we have
-        commitStreamMessage();
+        if (!receivedDone) commitStreamMessage();
       } catch (err) {
+        commitStreamMessage(); // finalize any partial buffer before showing error
         addMessage({ type: 'system', content: `[Connection error: ${err.message}]`, timestamp: new Date() });
+      } finally {
         setIsStreaming(false);
       }
     },

@@ -75,6 +75,7 @@ cmd_add() {
   today="$(date +%Y-%m-%d)"
 
   python3 - "$BACKLOG" "$section" "$message" "$today" <<'PYEOF'
+import os
 import sys
 
 path, section, message, today = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
@@ -123,8 +124,10 @@ lines.insert(insert_after + 1, new_item + "\n")
 if insert_after == section_idx:
     lines.insert(insert_after + 1, "\n")
 
-with open(path, "w", encoding="utf-8") as fh:
+tmp = path + ".tmp"
+with open(tmp, "w", encoding="utf-8") as fh:
     fh.writelines(lines)
+os.replace(tmp, path)
 
 print(f"Added to '{target_heading}': {message}")
 PYEOF

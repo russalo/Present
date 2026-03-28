@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.postgres",
     "api",
 ]
 

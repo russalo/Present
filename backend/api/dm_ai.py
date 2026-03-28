@@ -133,8 +133,7 @@ Only include arrays/objects that actually have changes. Empty arrays are fine if
 
 def build_world_context(session_id: str) -> dict:
     """Load world state + recent turns from DB and return a context dict."""
-    world_states = list(WorldState.objects.all()[:1])
-    state = world_states[0] if world_states else None
+    state = WorldState.objects.first()
 
     characters = list(Character.objects.values("name", "status", "current_location", "role"))
     locations = list(Location.objects.values("name", "type", "discovered"))
@@ -199,7 +198,7 @@ def build_messages(world_context: dict, player_action: str) -> list:
     ) or "None yet"
 
     item_list = ", ".join(
-        f"{i['name']}{f\" (owned by {i['ownedBy']})\" if i['ownedBy'] else ''}"
+        f"{i['name']} (owned by {i['ownedBy']})" if i['ownedBy'] else i['name']
         for i in world_context["items"]
     ) or "None yet"
 

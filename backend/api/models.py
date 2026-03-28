@@ -5,6 +5,7 @@ All models use managed=False — the tables already exist in PostgreSQL,
 created by infrastructure/migrations/. Django reads them; Drizzle owns migrations.
 """
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
@@ -67,7 +68,7 @@ class Character(models.Model):
     max_health = models.IntegerField(default=100, db_column="max_health")
     current_location = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    traits = models.JSONField(default=list)
+    traits = ArrayField(models.TextField(), default=list)
     status = models.TextField(default="alive")
     canon = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -88,7 +89,7 @@ class Location(models.Model):
     region = models.TextField(null=True, blank=True)
     discovered = models.BooleanField(default=False)
     danger = models.IntegerField(default=0)
-    notable_features = models.JSONField(default=list)
+    notable_features = ArrayField(models.TextField(), default=list)
     canon = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -107,7 +108,7 @@ class Faction(models.Model):
     alignment = models.TextField(null=True, blank=True)
     power = models.IntegerField(default=5)
     player_relation = models.IntegerField(default=0)
-    goals = models.JSONField(default=list)
+    goals = ArrayField(models.TextField(), default=list)
     canon = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

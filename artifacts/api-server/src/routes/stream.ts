@@ -87,6 +87,7 @@ router.post("/stream", async (req, res) => {
     res.end();
   } catch (err) {
     req.log?.error({ err }, "Stream failed");
+    console.error("Stream failed:", err);
     try {
       send({ type: "error", message: "Stream failed" });
       res.end();

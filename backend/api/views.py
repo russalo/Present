@@ -39,6 +39,7 @@ def healthz(request):
 
 # ─── Session ───────────────────────────────────────────────────────────────────
 
+# CSRF exempt — JSON API using token-based auth (no session cookies). Auth tracked in BACKLOG.md.
 @csrf_exempt
 def session(request):
     if request.method == "GET":
@@ -71,6 +72,7 @@ def _get_session(request):
     })
 
 
+# CSRF exempt — JSON API using token-based auth (no session cookies). Auth tracked in BACKLOG.md.
 @csrf_exempt
 def new_session(request):
     if request.method != "POST":
@@ -180,6 +182,7 @@ def session_turn(request):
 
 # ─── SSE streaming turn ────────────────────────────────────────────────────────
 
+# CSRF exempt — JSON API using token-based auth (no session cookies). Auth tracked in BACKLOG.md.
 @csrf_exempt
 def dm_stream(request):
     """POST /api/stream — SSE streaming DM turn."""
