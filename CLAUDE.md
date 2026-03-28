@@ -31,7 +31,36 @@ Never leave `docs/BACKLOG.md` in a state where completed work is still listed as
 
 ---
 
-## Healthy Questioning & Critique
+## Explicit Approval Required Before Implementation
+
+**You must not create, edit, or delete any file until the user has explicitly approved
+a plan in the current session.**
+
+This rule has no exceptions. "The plan seemed clear" is not an exception. "The user
+approved something similar before" is not an exception. "The task is small" is not
+an exception.
+
+**Allowed without approval:**
+- Reading files, exploring the codebase, running read-only commands
+- Writing or updating the plan file at `/root/.claude/plans/`
+- Asking clarifying questions
+
+**Not allowed until the user says to proceed:**
+- Creating new files
+- Editing existing files
+- Deleting files
+- Running commands that modify state (git commits, installs, etc.)
+
+If you have written a plan and are ready to implement, present it and stop. Wait for
+the user to explicitly say to proceed — words like "go ahead", "do it", "looks good",
+or equivalent. An acknowledgment that you answered a question correctly ("ok", "that
+makes sense") is **not** approval to implement.
+
+If you catch yourself about to write a file without approval, stop and ask.
+
+---
+
+
 
 You are expected to think critically, not just execute. Before implementing:
 

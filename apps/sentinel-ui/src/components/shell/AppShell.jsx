@@ -60,7 +60,7 @@ export function AppShell() {
         )}
       </div>
 
-      <CommandBar onSubmit={(input) => console.log('Action:', input)} />
+      <CommandBar />
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 
 export const usePlayerStore = create((set) => ({
+  // Session
+  sessionId: null,
+  setSessionId: (id) => set({ sessionId: id }),
+
   // Character identity
   characterName: '',
   characterClass: '',

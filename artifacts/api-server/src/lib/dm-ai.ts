@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 let _openai: OpenAI | null = null;
-function getOpenAIClient(): OpenAI {
+export function getOpenAIClient(): OpenAI {
   if (!_openai) {
     _openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -10,7 +10,7 @@ function getOpenAIClient(): OpenAI {
   }
   return _openai;
 }
-const DM_MODEL = process.env.DM_MODEL ?? "gpt-4o-mini";
+export const DM_MODEL = process.env.DM_MODEL ?? "gpt-4o-mini";
 
 const DM_SYSTEM_PROMPT = `You are the Dungeon Master (DM) of a persistent, living RPG world. Your role is to:
 
@@ -164,25 +164,10 @@ export interface DmResponse {
   rawResponse: string;
 }
 
-function parseWorldUpdate(raw: string): WorldUpdate {
-  try {
-    const match = raw.match(/<world_update>([\s\S]*?)<\/world_update>/);
-    if (!match) return {};
-    const json = match[1].trim();
-    return JSON.parse(json) as WorldUpdate;
-  } catch {
-    return {};
-  }
-}
-
-function extractNarrative(raw: string): string {
-  return raw.replace(/<world_update>[\s\S]*?<\/world_update>/g, "").trim();
-}
-
-export async function processDmTurn(
+export function buildMessages(
   playerAction: string,
   worldContext: WorldContext
-): Promise<DmResponse> {
+): Array<{ role: "system" | "user"; content: string }> {
   const contextBlock = `
 CURRENT WORLD STATE:
 - World: ${worldContext.worldName} (${worldContext.currentEra})
@@ -196,15 +181,36 @@ KNOWN FACTIONS: ${worldContext.factions.map(f => `${f.name} (relation: ${f.playe
 ITEMS IN PLAY: ${worldContext.items.map(i => `${i.name}${i.ownedBy ? ` (owned by ${i.ownedBy})` : ""}`).join(", ") || "None yet"}
 
 RECENT TURNS:
-${worldContext.recentTurns.slice(-3).map((t, i) => `Player: ${t.playerAction}\nDM: ${t.narrative}`).join("\n\n") || "This is the beginning of the session."}
+${worldContext.recentTurns.slice(-3).map(t => `Player: ${t.playerAction}\nDM: ${t.narrative}`).join("\n\n") || "This is the beginning of the session."}
 `;
+  return [
+    { role: "system", content: DM_SYSTEM_PROMPT },
+    { role: "user", content: contextBlock + "\n\nPLAYER ACTION: " + playerAction },
+  ];
+}
 
+export function parseWorldUpdate(raw: string): WorldUpdate {
+  try {
+    const match = raw.match(/<world_update>([\s\S]*?)<\/world_update>/);
+    if (!match) return {};
+    const json = match[1].trim();
+    return JSON.parse(json) as WorldUpdate;
+  } catch {
+    return {};
+  }
+}
+
+export function extractNarrative(raw: string): string {
+  return raw.replace(/<world_update>[\s\S]*?<\/world_update>/g, "").trim();
+}
+
+export async function processDmTurn(
+  playerAction: string,
+  worldContext: WorldContext
+): Promise<DmResponse> {
   const response = await getOpenAIClient().chat.completions.create({
     model: DM_MODEL,
-    messages: [
-      { role: "system", content: DM_SYSTEM_PROMPT },
-      { role: "user", content: contextBlock + "\n\nPLAYER ACTION: " + playerAction },
-    ],
+    messages: buildMessages(playerAction, worldContext),
     max_completion_tokens: 2000,
   });
 

@@ -92,13 +92,25 @@ typecheck:
 dev-frontend:
     pnpm --filter @sentinel/ui run dev
 
-# Start the Express backend dev server (api-server artifact)
+# Start the Express backend dev server (api-server artifact — dev reference only)
 dev-backend:
     pnpm --filter @workspace/api-server run dev
 
-# Start both frontend and backend (requires background process management)
+# Start the Django backend on :8001 (production backend)
+dev-django:
+    cd backend && python manage.py runserver 8001
+
+# Apply Django database migrations (no-op when models are managed=False)
+migrate:
+    cd backend && python manage.py migrate
+
+# Install Django backend dependencies
+install-django:
+    pip install -r backend/requirements.txt
+
+# Start both frontend and Django backend
 dev:
-    just dev-backend & just dev-frontend
+    just dev-django & just dev-frontend
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -109,6 +121,33 @@ test-schemas:
 # Run all tests: schema validation + TypeScript test suites
 test: test-schemas
     pnpm -r --if-present run test
+
+# ─── Session Lifecycle ────────────────────────────────────────────────────────
+
+# Fetch latest, show branch status, open backlog items, and verify structure
+start-session:
+    git fetch origin
+    @echo ""
+    @echo "=== Branch Status ==="
+    git status --short --branch
+    @echo ""
+    @echo "=== Open Backlog Items ==="
+    bash scripts/backlog.sh list
+    @echo ""
+    @just check-structure
+
+# Remind about open backlog + structure drift before closing
+end-session:
+    @echo "=== Open Backlog Items ==="
+    bash scripts/backlog.sh list
+    @echo ""
+    @just check-structure
+    @echo ""
+    @echo "Reminder: commit, push, and update BACKLOG.md before closing."
+
+# Verify all documented directories and files exist on disk
+check-structure:
+    bash scripts/check-structure.sh
 
 # ─── Git Hooks ────────────────────────────────────────────────────────────────
 
