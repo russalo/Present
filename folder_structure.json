@@ -95,6 +95,54 @@
         "scheduler.py": "Time-based simulation tick (faction movements, weather changes, NPC actions)."
       }
     },
+    "apps": {
+      "description": "Client-side applications.",
+      "sentinel-ui": {
+        "description": "React 19 + Vite + Tailwind v4 frontend. Diegetic design system, World Creation flow, and DM Persona system. Connects to the Django backend via SSE streaming.",
+        "src": "Application source — components, pages, Zustand stores, hooks, and API client.",
+        "public": "Static assets.",
+        "package.json": "Workspace package (@sentinel/ui). Declares dev server and build scripts.",
+        "vite.config.js": "Vite build configuration.",
+        "tailwind.config.js": "Tailwind v4 theme configuration.",
+        "index.html": "SPA entry point."
+      }
+    },
+    "artifacts": {
+      "description": "Development reference implementations — not production services.",
+      "api-server": {
+        "description": "Express 5 + Drizzle ORM dev reference backend. Kept as a working reference; the Django backend (backend/) is the production target.",
+        "src": "Route handlers, middleware, DM AI logic, and server bootstrap.",
+        "package.json": "Workspace package (@workspace/api-server).",
+        "tsconfig.json": "TypeScript configuration."
+      }
+    },
+    "backend": {
+      "description": "Django production backend. Serves the Sentinel API on :8001. Shares the PostgreSQL schema with the Drizzle reference implementation via managed=False models.",
+      "sentinel": "Django project package — settings, root URL conf, and WSGI entry point.",
+      "api": {
+        "description": "Django app — all API endpoints including the SSE streaming DM turn endpoint.",
+        "models.py": "ORM models (managed=False) — reads existing PostgreSQL tables created by infrastructure/migrations/.",
+        "views.py": "All 10 endpoints: session management, entity reads, and POST /api/stream (StreamingHttpResponse SSE).",
+        "dm_ai.py": "DM AI logic — world context builder, message builder, world update parser/applier, turn persistence.",
+        "urls.py": "URL routing."
+      },
+      "manage.py": "Django management CLI entry point.",
+      "requirements.txt": "Python dependencies (django, psycopg2-binary, openai, django-cors-headers)."
+    },
+    "lib": {
+      "description": "Shared TypeScript libraries consumed across workspace packages.",
+      "db": {
+        "description": "Shared Drizzle ORM schema definitions and PostgreSQL client. Consumed by artifacts/api-server and any future TypeScript packages.",
+        "src": "Schema definitions (world, characters, locations, factions, items) and database client factory.",
+        "package.json": "Workspace package.",
+        "drizzle.config.ts": "Drizzle Kit configuration.",
+        "tsconfig.json": "TypeScript configuration."
+      }
+    },
+    "docs": {
+      "description": "Project documentation and working reference files.",
+      "BACKLOG.md": "Single source of truth for discovered, deferred, and in-progress work items. Maintained by agents and contributors."
+    },
     ".github": {
       "ISSUE_TEMPLATE": {
         "lore_entry.md": "Lore-Smith template for new NPCs, locations, and codex entries.",

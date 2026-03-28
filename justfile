@@ -122,6 +122,33 @@ test-schemas:
 test: test-schemas
     pnpm -r --if-present run test
 
+# ─── Session Lifecycle ────────────────────────────────────────────────────────
+
+# Fetch latest, show branch status, open backlog items, and verify structure
+start-session:
+    git fetch origin
+    @echo ""
+    @echo "=== Branch Status ==="
+    git status --short --branch
+    @echo ""
+    @echo "=== Open Backlog Items ==="
+    bash scripts/backlog.sh list
+    @echo ""
+    @just check-structure
+
+# Remind about open backlog + structure drift before closing
+end-session:
+    @echo "=== Open Backlog Items ==="
+    bash scripts/backlog.sh list
+    @echo ""
+    @just check-structure
+    @echo ""
+    @echo "Reminder: commit, push, and update BACKLOG.md before closing."
+
+# Verify all documented directories and files exist on disk
+check-structure:
+    bash scripts/check-structure.sh
+
 # ─── Git Hooks ────────────────────────────────────────────────────────────────
 
 # Post-merge hook: reinstall locked deps + apply DB migrations

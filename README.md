@@ -60,6 +60,15 @@ project-sentinel/
 │   │   └── lorekeeper.yaml    # Manages RAG context injection
 │   ├── orchestrator/          # The Core Loop (Action -> Narrative -> Extract -> Update)
 │   └── simulation/            # Background world progression and cron-events
+├── apps/
+│   └── sentinel-ui/           # React 19 + Vite + Tailwind v4 frontend
+├── artifacts/
+│   └── api-server/            # Express 5 + Drizzle dev reference backend
+├── backend/                   # Django production backend (:8001)
+├── lib/
+│   └── db/                    # Shared Drizzle ORM schema + PostgreSQL client
+├── docs/
+│   └── BACKLOG.md             # Open work items
 ├── .github/
 │   └── ISSUE_TEMPLATE/        # Contributor templates (Lore-Smith, Technician, Architect)
 ├── ARCHITECTURE.md            # Core vs. Community framework and namespace rules
@@ -141,7 +150,11 @@ just install
 ```
 
 Runs `pnpm install --frozen-lockfile` and `pip install` for all three MCP
-servers in one step.
+servers in one step. To also install Django backend dependencies:
+
+```bash
+just install-django
+```
 
 ### 3. Spin up the full cloud stack
 
@@ -185,8 +198,9 @@ python orchestrator/main.py
 
 A reference implementation of Project Sentinel is available in this repository:
 
-- **Frontend** — `apps/sentinel-ui/` (`@sentinel/ui`) — React 19 + Vite + Tailwind v4, diegetic design system, World Creation flow, DM Persona system
-- **Backend** — `artifacts/api-server/` — Express 5 + PostgreSQL + Drizzle ORM; currently wired to stub SSE and mock seed endpoints (real API integration tracked in `docs/BACKLOG.md`)
+- **Frontend** — `apps/sentinel-ui/` (`@sentinel/ui`) — React 19 + Vite + Tailwind v4, diegetic design system, World Creation flow, DM Persona system. Connects to the Django backend via `fetch`-based SSE streaming.
+- **Production backend** — `backend/` — Django on `:8001`. SSE streaming DM turns via `StreamingHttpResponse`, PostgreSQL via shared schema (managed=False models), LiteLLM via the standard OpenAI client.
+- **Dev reference** — `artifacts/api-server/` — Express 5 + Drizzle ORM. Kept as a working reference implementation alongside the Django backend.
 
 ---
 

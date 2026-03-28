@@ -31,15 +31,6 @@ Completed items should be removed by the end-session workflow, not left to accum
 
 ## Developer Experience
 
-- [ ] Add `just start-session` and `just end-session` recipes
-      _Discovered: 2026-03-25 | Context: requested — git sync, backlog echo at session start; commit/push and backlog update at session end_
-
-- [ ] Add `scripts/backlog.sh` to support add/remove/list operations on this file
-      _Discovered: 2026-03-25 | Context: needed to back the session lifecycle just recipes_
-
-- [ ] Add targeted tests: just recipe smoke tests, backlog script manipulation tests, script executability checks
-      _Discovered: 2026-03-25 | Context: assessed as valuable at current stage; not yet implemented_
-
 - [ ] Add unit and integration tests for `apps/sentinel-ui/` — Zustand stores, API client, and key components
       _Discovered: 2026-03-26 | Context: flagged in PR #5 review; no tests exist for any of the 8 frontend phases; recommend vitest + @testing-library/react_
 
